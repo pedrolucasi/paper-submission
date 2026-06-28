@@ -1,2 +1,5 @@
-# paper-submission
-Sistema de Submissão e Avaliação de Artigos Científicos para a disciplina de Padrões de Projeto de Software do Curso Superior de Sistemas para Internet do IFPB
+## 📄 SciReview - Sistema de Submissão de Artigos
+
+Sistema de Submissão de Artigos Científicos para a disciplina de Padrões de Projeto de Software (PPS) do Curso Superior de Sistemas para Internet do Instituto Federal da Paraíba.
+
+
