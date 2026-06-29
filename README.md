@@ -46,13 +46,13 @@ mvn package
 Via Maven:
 
 ```bash
-mvn exec:java -Dexec.mainClass="br.edu.ifpb.cstsi.pss.scireview.App"
+mvn exec:java -Dexec.mainClass="br.edu.ifpb.cstsi.pss.scireview.Main"
 ```
 
 Ou, após o `mvn package`:
 
 ```bash
-java -cp target/paper-submission-1.0-SNAPSHOT.jar br.edu.ifpb.cstsi.pss.scireview.App
+java -cp target/paper-submission-1.0-SNAPSHOT.jar br.edu.ifpb.cstsi.pss.scireview.Main
 ```
 
 Saída esperada:
