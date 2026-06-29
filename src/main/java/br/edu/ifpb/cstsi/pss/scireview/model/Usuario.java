@@ -3,6 +3,7 @@ package br.edu.ifpb.cstsi.pss.scireview.model;
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -16,6 +17,7 @@ public class Usuario {
     private String senha;
     private String instituicao;
     private final Set<Papel> papeis;
+    private final Set<AreaTematica> areasDeInteresse = new LinkedHashSet<>();
 
     public Usuario(String email, String senha, String instituicao, Set<Papel> papeis) {
         this.email = normalizarEmail(email);
@@ -51,6 +53,21 @@ public class Usuario {
 
     public boolean possuiPapel(Papel papel) {
         return papeis.contains(papel);
+    }
+
+    public Set<AreaTematica> getAreasDeInteresse() {
+        return Collections.unmodifiableSet(areasDeInteresse);
+    }
+
+    public void adicionarAreaDeInteresse(AreaTematica area) {
+        if (area == null) {
+            throw new DadosInvalidosException("Área temática é obrigatória.");
+        }
+        areasDeInteresse.add(area);
+    }
+
+    public boolean possuiAreaDeInteresse(AreaTematica area) {
+        return areasDeInteresse.contains(area);
     }
 
     @Override
