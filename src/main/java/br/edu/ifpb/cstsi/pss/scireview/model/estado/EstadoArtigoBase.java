@@ -22,6 +22,11 @@ abstract class EstadoArtigoBase implements EstadoArtigo {
     }
 
     @Override
+    public void concluirRevisao(Artigo artigo) {
+        throw transicaoInvalida("concluído pelo revisor");
+    }
+
+    @Override
     public void aceitar(Artigo artigo) {
         throw transicaoInvalida("aceito");
     }

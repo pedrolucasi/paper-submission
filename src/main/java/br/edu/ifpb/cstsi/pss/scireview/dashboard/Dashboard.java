@@ -51,7 +51,9 @@ public class Dashboard {
         int count = 0;
         for (Artigo artigo : artigos) {
             StatusArtigo status = artigo.getStatus();
-            if (status == StatusArtigo.ACEITO || status == StatusArtigo.REJEITADO) {
+            if (status == StatusArtigo.REVISADO
+                    || status == StatusArtigo.ACEITO
+                    || status == StatusArtigo.REJEITADO) {
                 count++;
             }
         }
@@ -61,16 +63,20 @@ public class Dashboard {
     private Map<Usuario, List<Artigo>> mapearPendenciasPorRevisor(List<Artigo> artigos) {
         Map<Usuario, List<Artigo>> pendencias = new HashMap<>();
 
-        for (Artigo artigo : artigos) {
-            if (artigo.getStatus() == StatusArtigo.EM_REVISAO) {
-                List<Usuario> revisoresDoArtigo = sistemaAvaliacao.getRevisoresPorArtigo(artigo);
-                for (Usuario revisor : revisoresDoArtigo) {
-                    pendencias.computeIfAbsent(revisor, k -> new ArrayList<>()).add(artigo);
-                }
-            }
+        for (Revisao revisao : obterRevisoesPendentes()) {
+            Usuario revisor = revisao.getRevisor();
+            Artigo artigo = revisao.getArtigo();
+            pendencias.computeIfAbsent(revisor, k -> new ArrayList<>()).add(artigo);
         }
 
         return pendencias;
+    }
+
+    private List<Revisao> obterRevisoesPendentes() {
+        return sistemaAvaliacao.listarTodosArtigos().stream()
+                .flatMap(artigo -> sistemaAvaliacao.getRevisoesPorArtigo(artigo).stream())
+                .filter(revisao -> !revisao.isConcluida())
+                .toList();
     }
 
     public void exibirDashboard() {

@@ -1,5 +1,7 @@
 package br.edu.ifpb.cstsi.pss.scireview.service;
 
+import java.util.List;
+
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Evento;
 import br.edu.ifpb.cstsi.pss.scireview.model.Notificacao;
@@ -7,8 +9,6 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.observer.Observer;
-
-import java.util.List;
 
 public class ServicoEmail implements Observer {
 

@@ -7,11 +7,12 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class SistemaAvaliacao {
-    private List<Artigo> artigos = new ArrayList<>();
-    private List<Revisao> revisoes = new ArrayList<>();
+
+    private final List<Artigo> artigos = new ArrayList<>();
+    private final List<Revisao> revisoes = new ArrayList<>();
 
     public void adicionarArtigo(Artigo artigo) {
         artigos.add(artigo);
@@ -23,26 +24,54 @@ public class SistemaAvaliacao {
 
     public List<Artigo> getArtigosPorEvento(Evento evento) {
         return artigos.stream()
-                .filter(a -> {
-                    Evento eventoArtigo = a.getEvento();
+                .filter(artigo -> {
+                    Evento eventoArtigo = artigo.getEvento();
                     return eventoArtigo != null && eventoArtigo.equals(evento);
                 })
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public Optional<Artigo> buscarArtigoPorId(String artigoId) {
+        if (artigoId == null || artigoId.isBlank()) {
+            return Optional.empty();
+        }
+        return artigos.stream()
+                .filter(artigo -> artigo.getId().equals(artigoId.trim()))
+                .findFirst();
     }
 
     public List<Revisao> getRevisoesPorArtigo(Artigo artigo) {
         return revisoes.stream()
-                .filter(r -> r.getArtigo().equals(artigo))
-                .collect(Collectors.toList());
+                .filter(revisao -> revisao.getArtigo().equals(artigo))
+                .toList();
     }
 
     public List<Usuario> getRevisoresPorArtigo(Artigo artigo) {
         return getRevisoesPorArtigo(artigo).stream()
                 .map(Revisao::getRevisor)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public Optional<Revisao> buscarRevisao(Artigo artigo, Usuario revisor) {
+        return revisoes.stream()
+                .filter(revisao -> revisao.getArtigo().equals(artigo))
+                .filter(revisao -> revisao.getRevisor().equals(revisor))
+                .findFirst();
+    }
+
+    public List<Revisao> listarRevisoesPendentesDoRevisor(Usuario revisor) {
+        return revisoes.stream()
+                .filter(revisao -> revisao.getRevisor().equals(revisor))
+                .filter(revisao -> !revisao.isConcluida())
+                .toList();
     }
 
     public void adicionarRevisao(Revisao revisao) {
         revisoes.add(revisao);
+    }
+
+    public void limpar() {
+        artigos.clear();
+        revisoes.clear();
     }
 }
