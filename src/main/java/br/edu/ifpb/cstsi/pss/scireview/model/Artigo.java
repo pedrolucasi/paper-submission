@@ -1,6 +1,7 @@
 package br.edu.ifpb.cstsi.pss.scireview.model;
 
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
+import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.estado.EstadoArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.estado.Submetido;
@@ -17,14 +18,16 @@ public class Artigo {
     private final String resumo;
     private final List<String> coautores;
     private final Usuario autor;
+    private final Evento evento;
     private EstadoArtigo estado;
 
-    public Artigo(String id, String nome, String resumo, List<String> coautores, Usuario autor) {
+    public Artigo(String id, String nome, String resumo, List<String> coautores, Usuario autor, Evento evento) {
         this.id = validarId(id);
         this.nome = validarTextoObrigatorio(nome, "Nome do artigo é obrigatório.");
         this.resumo = validarTextoObrigatorio(resumo, "Resumo do artigo é obrigatório.");
         this.coautores = validarCoautores(coautores);
         this.autor = Objects.requireNonNull(autor, "Autor do artigo é obrigatório.");
+        this.evento = Objects.requireNonNull(evento, "Evento do artigo é obrigatório.");
         this.estado = new Submetido();
     }
 
@@ -73,11 +76,13 @@ public class Artigo {
     }
 
     public Evento getEvento() {
-        return null; // Será implementado quando associar artigo ao evento
+        return evento;
     }
 
     public String getCategoria() {
-        return "Full Paper"; // Será implementado quando associar artigo ao evento
+        return evento.getCategoria()
+                .map(CategoriaArtigo::getNome)
+                .orElse("Categoria não definida");
     }
 
     public String getTitulo() {

@@ -4,17 +4,19 @@ import br.edu.ifpb.cstsi.pss.scireview.dashboard.Dashboard;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.model.Avaliacao;
-import br.edu.ifpb.cstsi.pss.scireview.model.Evento;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.Veredito;
+import br.edu.ifpb.cstsi.pss.scireview.model.categoria.FullPaper;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroAreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroUsuario;
 import br.edu.ifpb.cstsi.pss.scireview.service.DistribuicaoRevisores;
+import br.edu.ifpb.cstsi.pss.scireview.service.ComiteTecnico;
 import br.edu.ifpb.cstsi.pss.scireview.service.GerenciadorEvento;
 import br.edu.ifpb.cstsi.pss.scireview.service.ServicoEmail;
 import br.edu.ifpb.cstsi.pss.scireview.service.SistemaAvaliacao;
+import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,13 +27,12 @@ import java.util.UUID;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("SciReview - Sistema de Submissão de Artigos");
-        System.out.println("============================================\n");
-
         GerenciadorEvento gerenciadorEvento = new GerenciadorEvento();
         CadastroUsuario cadastroUsuario = new CadastroUsuario();
         SistemaAvaliacao sistemaAvaliacao = new SistemaAvaliacao();
-        CadastroAreaTematica cadastroAreaTematica = new CadastroAreaTematica();
+        SubmissaoArtigo submissaoArtigo = new SubmissaoArtigo(gerenciadorEvento);
+        ComiteTecnico comiteTecnico = new ComiteTecnico();
+        CadastroAreaTematica cadastroArea = new CadastroAreaTematica();
 
         ServicoEmail servicoEmail = new ServicoEmail(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao);
         gerenciadorEvento.adicionarObserver(servicoEmail);
