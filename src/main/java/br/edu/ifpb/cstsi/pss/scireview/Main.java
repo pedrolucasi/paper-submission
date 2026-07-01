@@ -22,7 +22,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class Main {
 
@@ -32,7 +31,7 @@ public class Main {
         SistemaAvaliacao sistemaAvaliacao = new SistemaAvaliacao();
         SubmissaoArtigo submissaoArtigo = new SubmissaoArtigo(gerenciadorEvento);
         ComiteTecnico comiteTecnico = new ComiteTecnico();
-        CadastroAreaTematica cadastroArea = new CadastroAreaTematica();
+        CadastroAreaTematica cadastroAreaTematica = new CadastroAreaTematica();
 
         ServicoEmail servicoEmail = new ServicoEmail(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao);
         gerenciadorEvento.adicionarObserver(servicoEmail);
@@ -120,42 +119,38 @@ public class Main {
 
         List<Artigo> artigos = new ArrayList<>();
 
-        Artigo artigo1 = new Artigo(
-                UUID.randomUUID().toString(),
+        Artigo artigo1 = submissaoArtigo.submeter(
+                autor1,
                 "IA Aplicada à Saúde com Machine Learning",
                 "Este artigo explora aplicações de Inteligência Artificial e Machine Learning na área da saúde...",
-                List.of("coautor1@email.com"),
-                autor1
+                List.of("coautor1@email.com")
         );
         artigos.add(artigo1);
         sistemaAvaliacao.adicionarArtigo(artigo1);
 
-        Artigo artigo2 = new Artigo(
-                UUID.randomUUID().toString(),
+        Artigo artigo2 = submissaoArtigo.submeter(
+                autor1,
                 "Visão Computacional para Diagnóstico por Imagem",
                 "Utilização de técnicas de Visão Computacional para auxiliar no diagnóstico médico...",
-                List.of("coautor2@email.com"),
-                autor1
+                List.of("coautor2@email.com")
         );
         artigos.add(artigo2);
         sistemaAvaliacao.adicionarArtigo(artigo2);
 
-        Artigo artigo3 = new Artigo(
-                UUID.randomUUID().toString(),
+        Artigo artigo3 = submissaoArtigo.submeter(
+                autor2,
                 "Análise de Dados em Sistemas de Saúde",
                 "Aplicação de Ciência de Dados para análise de prontuários eletrônicos...",
-                List.of("coautor3@email.com"),
-                autor2
+                List.of("coautor3@email.com")
         );
         artigos.add(artigo3);
         sistemaAvaliacao.adicionarArtigo(artigo3);
 
-        Artigo artigo4 = new Artigo(
-                UUID.randomUUID().toString(),
+        Artigo artigo4 = submissaoArtigo.submeter(
+                autor2,
                 "Deep Learning para Processamento de Linguagem Natural",
                 "Uso de Deep Learning para processamento de linguagem natural em textos médicos...",
-                List.of("coautor4@email.com"),
-                autor2
+                List.of("coautor4@email.com")
         );
         artigos.add(artigo4);
         sistemaAvaliacao.adicionarArtigo(artigo4);
