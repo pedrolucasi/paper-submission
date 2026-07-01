@@ -1,5 +1,13 @@
 package br.edu.ifpb.cstsi.pss.scireview;
 
+import br.edu.ifpb.cstsi.pss.scireview.command.CadastrarAreaCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.CommandHistory;
+import br.edu.ifpb.cstsi.pss.scireview.command.DefinirCategoriaCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.DistribuirArtigosCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.FinalizarCicloCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.IniciarEventoCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.RegistrarRevisorCommand;
+import br.edu.ifpb.cstsi.pss.scireview.command.SubmeterArtigoCommand;
 import br.edu.ifpb.cstsi.pss.scireview.dashboard.Dashboard;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
@@ -11,8 +19,8 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Veredito;
 import br.edu.ifpb.cstsi.pss.scireview.model.categoria.FullPaper;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroAreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroUsuario;
-import br.edu.ifpb.cstsi.pss.scireview.service.DistribuicaoRevisores;
 import br.edu.ifpb.cstsi.pss.scireview.service.ComiteTecnico;
+import br.edu.ifpb.cstsi.pss.scireview.service.DistribuicaoRevisores;
 import br.edu.ifpb.cstsi.pss.scireview.service.GerenciadorEvento;
 import br.edu.ifpb.cstsi.pss.scireview.service.ServicoEmail;
 import br.edu.ifpb.cstsi.pss.scireview.service.SistemaAvaliacao;
@@ -26,6 +34,11 @@ import java.util.Set;
 public class Main {
 
     public static void main(String[] args) {
+        System.out.println("SciReview - Sistema de Submissao de Artigos");
+        System.out.println("============================================\n");
+
+        CommandHistory historico = CommandHistory.getInstance();
+
         GerenciadorEvento gerenciadorEvento = new GerenciadorEvento();
         CadastroUsuario cadastroUsuario = new CadastroUsuario();
         SistemaAvaliacao sistemaAvaliacao = new SistemaAvaliacao();
@@ -39,138 +52,168 @@ public class Main {
         Dashboard dashboard = new Dashboard(sistemaAvaliacao, cadastroUsuario);
         DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(sistemaAvaliacao, cadastroAreaTematica);
 
-        LocalDate hoje = LocalDate.now();
-        gerenciadorEvento.startNovoEvento(
-                "Simpósio Brasileiro de Sistemas de Informação - 2026",
-                "Vitória - ES",
-                "25 de maio a 28 de maio de 2026",
-                hoje.minusDays(10),
-                hoje.plusDays(10)
-        );
-
+        // RF02 - Cadastro de usuarios
         Usuario coordenador = cadastroUsuario.cadastrar(
-                "coordenador@evento.com",
-                "senha123",
-                "IFPB",
-                Set.of(Papel.COORDENADOR)
-        );
-
-        System.out.println("📝 CADASTRANDO USUÁRIOS...");
-
+                "coordenador@evento.com", "senha123", "IFPB", Set.of(Papel.COORDENADOR));
         Usuario autor1 = cadastroUsuario.cadastrar(
-                "autor1@email.com",
-                "senha123",
-                "UFPB",
-                Set.of(Papel.AUTOR)
-        );
-
+                "autor1@email.com", "senha123", "UFPB", Set.of(Papel.AUTOR));
         Usuario autor2 = cadastroUsuario.cadastrar(
-                "autor2@email.com",
-                "senha123",
-                "UFCG",
-                Set.of(Papel.AUTOR)
-        );
+                "autor2@email.com", "senha123", "UFCG", Set.of(Papel.AUTOR));
 
         List<Usuario> revisores = new ArrayList<>();
         revisores.add(cadastroUsuario.cadastrar(
-                "revisor1@email.com",
-                "senha123",
-                "USP",
-                Set.of(Papel.REVISOR)
-        ));
+                "revisor1@email.com", "senha123", "USP", Set.of(Papel.REVISOR)));
         revisores.add(cadastroUsuario.cadastrar(
-                "revisor2@email.com",
-                "senha123",
-                "UNICAMP",
-                Set.of(Papel.REVISOR)
-        ));
+                "revisor2@email.com", "senha123", "UNICAMP", Set.of(Papel.REVISOR)));
         revisores.add(cadastroUsuario.cadastrar(
-                "revisor3@email.com",
-                "senha123",
-                "UFRJ",
-                Set.of(Papel.REVISOR)
-        ));
+                "revisor3@email.com", "senha123", "UFRJ", Set.of(Papel.REVISOR)));
 
-        System.out.println("\n🏷️ CADASTRANDO ÁREAS TEMÁTICAS...");
+        // RF01 - Command: Iniciar Evento
+        LocalDate hoje = LocalDate.now();
+        IniciarEventoCommand iniciarEvento = new IniciarEventoCommand(
+                gerenciadorEvento, coordenador,
+                "Simposio Brasileiro de Sistemas de Informacao - 2026",
+                "Vitoria - ES",
+                "25 de maio a 28 de maio de 2026",
+                hoje.minusDays(30),
+                hoje.plusDays(30)
+        );
+        iniciarEvento.executar();
 
-        AreaTematica ia = cadastroAreaTematica.cadastrar(coordenador, "Inteligência Artificial");
-        AreaTematica ml = cadastroAreaTematica.cadastrar(coordenador, "Machine Learning");
-        AreaTematica visao = cadastroAreaTematica.cadastrar(coordenador, "Visão Computacional");
-        AreaTematica dados = cadastroAreaTematica.cadastrar(coordenador, "Ciência de Dados");
-        AreaTematica saude = cadastroAreaTematica.cadastrar(coordenador, "Informática na Saúde");
+        // RF04 - Command: Definir Categoria
+        DefinirCategoriaCommand definirCategoria = new DefinirCategoriaCommand(
+                gerenciadorEvento, coordenador, new FullPaper());
+        definirCategoria.executar();
 
-        System.out.println("\n🔗 ASSOCIANDO ÁREAS AOS REVISORES...");
+        // RF03 - Command: Cadastrar Areas
+        CadastrarAreaCommand areaIA = new CadastrarAreaCommand(
+                cadastroAreaTematica, coordenador, "Inteligencia Artificial");
+        areaIA.executar();
 
-        cadastroAreaTematica.associarRevisor(revisores.get(0), "Inteligência Artificial");
+        CadastrarAreaCommand areaML = new CadastrarAreaCommand(
+                cadastroAreaTematica, coordenador, "Machine Learning");
+        areaML.executar();
+
+        CadastrarAreaCommand areaVisao = new CadastrarAreaCommand(
+                cadastroAreaTematica, coordenador, "Visao Computacional");
+        areaVisao.executar();
+
+        CadastrarAreaCommand areaDados = new CadastrarAreaCommand(
+                cadastroAreaTematica, coordenador, "Ciencia de Dados");
+        areaDados.executar();
+
+        CadastrarAreaCommand areaSaude = new CadastrarAreaCommand(
+                cadastroAreaTematica, coordenador, "Informatica na Saude");
+        areaSaude.executar();
+
+        // Associar areas aos revisores
+        cadastroAreaTematica.associarRevisor(revisores.get(0), "Inteligencia Artificial");
         cadastroAreaTematica.associarRevisor(revisores.get(0), "Machine Learning");
-        cadastroAreaTematica.associarRevisor(revisores.get(0), "Ciência de Dados");
+        cadastroAreaTematica.associarRevisor(revisores.get(0), "Ciencia de Dados");
+        cadastroAreaTematica.associarRevisor(revisores.get(1), "Visao Computacional");
+        cadastroAreaTematica.associarRevisor(revisores.get(1), "Inteligencia Artificial");
+        cadastroAreaTematica.associarRevisor(revisores.get(2), "Ciencia de Dados");
+        cadastroAreaTematica.associarRevisor(revisores.get(2), "Informatica na Saude");
 
-        cadastroAreaTematica.associarRevisor(revisores.get(1), "Visão Computacional");
-        cadastroAreaTematica.associarRevisor(revisores.get(1), "Inteligência Artificial");
-
-        cadastroAreaTematica.associarRevisor(revisores.get(2), "Ciência de Dados");
-        cadastroAreaTematica.associarRevisor(revisores.get(2), "Informática na Saúde");
-
+        // RF04 - Command: Registrar Revisores
         for (Usuario revisor : revisores) {
-            System.out.println("   👤 " + revisor.getEmail() + ": " + revisor.getAreasDeInteresse());
+            RegistrarRevisorCommand registrarRevisor = new RegistrarRevisorCommand(
+                    comiteTecnico, coordenador, revisor);
+            registrarRevisor.executar();
         }
 
-        System.out.println("\n📄 SUBMETENDO ARTIGOS...");
-
+        // RF05 - Command: Submeter Artigos
         List<Artigo> artigos = new ArrayList<>();
 
-        Artigo artigo1 = submissaoArtigo.submeter(
-                autor1,
-                "IA Aplicada à Saúde com Machine Learning",
-                "Este artigo explora aplicações de Inteligência Artificial e Machine Learning na área da saúde...",
+        SubmeterArtigoCommand submeter1 = new SubmeterArtigoCommand(
+                submissaoArtigo, autor1,
+                "IA Aplicada a Saude com Machine Learning",
+                "Este artigo explora aplicacoes de Inteligencia Artificial e Machine Learning na area da saude...",
                 List.of("coautor1@email.com")
         );
-        artigos.add(artigo1);
-        sistemaAvaliacao.adicionarArtigo(artigo1);
+        submeter1.executar();
+        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(0));
 
-        Artigo artigo2 = submissaoArtigo.submeter(
-                autor1,
-                "Visão Computacional para Diagnóstico por Imagem",
-                "Utilização de técnicas de Visão Computacional para auxiliar no diagnóstico médico...",
+        SubmeterArtigoCommand submeter2 = new SubmeterArtigoCommand(
+                submissaoArtigo, autor1,
+                "Visao Computacional para Diagnostico por Imagem",
+                "Utilizacao de tecnicas de Visao Computacional para auxiliar no diagnostico medico...",
                 List.of("coautor2@email.com")
         );
-        artigos.add(artigo2);
-        sistemaAvaliacao.adicionarArtigo(artigo2);
+        submeter2.executar();
+        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(1));
 
-        Artigo artigo3 = submissaoArtigo.submeter(
-                autor2,
-                "Análise de Dados em Sistemas de Saúde",
-                "Aplicação de Ciência de Dados para análise de prontuários eletrônicos...",
+        SubmeterArtigoCommand submeter3 = new SubmeterArtigoCommand(
+                submissaoArtigo, autor2,
+                "Analise de Dados em Sistemas de Saude",
+                "Aplicacao de Ciencia de Dados para analise de prontuarios eletronicos...",
                 List.of("coautor3@email.com")
         );
-        artigos.add(artigo3);
-        sistemaAvaliacao.adicionarArtigo(artigo3);
+        submeter3.executar();
+        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(0));
 
-        Artigo artigo4 = submissaoArtigo.submeter(
-                autor2,
+        SubmeterArtigoCommand submeter4 = new SubmeterArtigoCommand(
+                submissaoArtigo, autor2,
                 "Deep Learning para Processamento de Linguagem Natural",
-                "Uso de Deep Learning para processamento de linguagem natural em textos médicos...",
+                "Uso de Deep Learning para processamento de linguagem natural em textos medicos...",
                 List.of("coautor4@email.com")
         );
-        artigos.add(artigo4);
-        sistemaAvaliacao.adicionarArtigo(artigo4);
+        submeter4.executar();
+        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(1));
 
+        // Colocar artigos em revisao
         for (Artigo artigo : artigos) {
-            System.out.println("   📄 " + artigo.getTitulo() + " (ID: " + artigo.getId() + ")");
-            System.out.println("      Autor: " + artigo.getAutor().getEmail());
-            System.out.println("      Coautores: " + artigo.getCoautores());
+            artigo.enviarParaRevisao();
+            sistemaAvaliacao.adicionarArtigo(artigo);
         }
 
-        System.out.println("\n📤 DISTRIBUINDO ARTIGOS PARA REVISORES...");
+        // RF06 - Command: Distribuir Artigos
+        DistribuirArtigosCommand distribuir = new DistribuirArtigosCommand(
+                distribuicao, artigos, revisores, coordenador);
+        distribuir.executar();
 
-        distribuicao.distribuirAutomaticamente(artigos, revisores);
+        // RF07 - Realizar avaliacoes
+        for (Revisao revisao : sistemaAvaliacao.getTodasRevisoes()) {
+            if (revisao.getArtigo().getTitulo().contains("Saude") ||
+                revisao.getArtigo().getTitulo().contains("Diagnostico")) {
+                revisao.setAvaliacao(new Avaliacao(
+                        "Excelente contribuicao para a area",
+                        "Poderia melhorar a metodologia",
+                        Veredito.ACEITO
+                ));
+                revisao.getArtigo().aceitar();
+            } else {
+                revisao.setAvaliacao(new Avaliacao(
+                        "Boa proposta, mas com limitacoes",
+                        "Amostra pequena, faltam dados",
+                        Veredito.FRACAMENTE_RECUSADO
+                ));
+                revisao.getArtigo().rejeitar();
+            }
+        }
 
-        System.out.println("\n📊 DASHBOARD APÓS DISTRIBUIÇÃO:");
+        // RF09 - Command: Finalizar Ciclo
+        FinalizarCicloCommand finalizar = new FinalizarCicloCommand(gerenciadorEvento, coordenador);
+        finalizar.executar();
+
+        // RF10 - Exibir Historico de Auditoria
+        System.out.println("\n+--------------------------------------------------------+");
+        System.out.println("|  TASK 4.2 - PADRAO COMMAND (RF10)                     |");
+        System.out.println("|  Log e Auditoria Historica de Acoes do Coordenador    |");
+        System.out.println("+--------------------------------------------------------+");
+
+        historico.exibirHistorico();
+
+        // Demonstrando Undo
+        System.out.println("\n[DEMONSTRACAO] Desfazendo ultimo comando...");
+        historico.desfazerUltimo();
+
+        System.out.println("\n[DEMONSTRACAO] Historico apos Undo:");
+        historico.exibirHistorico();
+
+        System.out.println("\n[DASHBOARD] Exibindo dados finais:");
         dashboard.exibirDashboard();
 
-        System.out.println("\n📧 FINALIZANDO CICLO DE AVALIAÇÕES...");
-        gerenciadorEvento.finalizarCicloRevisoes();
-
-        System.out.println("\n✅ PROGRAMA FINALIZADO!");
+        System.out.println("\n[FIM] Programa finalizado.");
     }
 }

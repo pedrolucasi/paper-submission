@@ -75,3 +75,7 @@ public class SistemaAvaliacao {
         revisoes.clear();
     }
 }
+    public List<Revisao> getTodasRevisoes() {
+    return new ArrayList<>(revisoes);
+    }
+}
