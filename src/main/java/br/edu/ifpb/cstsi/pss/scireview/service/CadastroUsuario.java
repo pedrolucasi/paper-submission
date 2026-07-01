@@ -43,4 +43,10 @@ public class CadastroUsuario {
     private String normalizarChaveEmail(String email) {
         return email.trim().toLowerCase();
     }
+
+    public List<Usuario> listarRevisoresComAres(){
+        return usuariosPorEmail.values().stream()
+                .filter(u -> u.possuiPapel(Papel.REVISOR) && !u.getAreasDeInteresse().isEmpty())
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
