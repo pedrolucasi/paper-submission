@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.model;
 
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Evento {
@@ -9,11 +10,22 @@ public class Evento {
     private final String nome;
     private final String cidade;
     private final String periodo;
+    private final LocalDate inicioSubmissao;
+    private final LocalDate fimSubmissao;
 
-    public Evento(String nome, String cidade, String periodo) {
+    public Evento(
+            String nome,
+            String cidade,
+            String periodo,
+            LocalDate inicioSubmissao,
+            LocalDate fimSubmissao
+    ) {
         this.nome = validarTextoObrigatorio(nome, "Nome do evento é obrigatório.");
         this.cidade = validarTextoObrigatorio(cidade, "Cidade do evento é obrigatória.");
         this.periodo = validarTextoObrigatorio(periodo, "Período do evento é obrigatório.");
+        this.inicioSubmissao = Objects.requireNonNull(inicioSubmissao, "Início da submissão é obrigatório.");
+        this.fimSubmissao = Objects.requireNonNull(fimSubmissao, "Fim da submissão é obrigatório.");
+        validarJanelaSubmissao(this.inicioSubmissao, this.fimSubmissao);
     }
 
     public String getNome() {
@@ -28,6 +40,19 @@ public class Evento {
         return periodo;
     }
 
+    public LocalDate getInicioSubmissao() {
+        return inicioSubmissao;
+    }
+
+    public LocalDate getFimSubmissao() {
+        return fimSubmissao;
+    }
+
+    public boolean estaDentroDoPrazo(LocalDate dataReferencia) {
+        Objects.requireNonNull(dataReferencia, "Data de referência é obrigatória.");
+        return !dataReferencia.isBefore(inicioSubmissao) && !dataReferencia.isAfter(fimSubmissao);
+    }
+
     @Override
     public boolean equals(Object objeto) {
         if (this == objeto) {
@@ -39,12 +64,14 @@ public class Evento {
         Evento evento = (Evento) objeto;
         return Objects.equals(nome, evento.nome)
                 && Objects.equals(cidade, evento.cidade)
-                && Objects.equals(periodo, evento.periodo);
+                && Objects.equals(periodo, evento.periodo)
+                && Objects.equals(inicioSubmissao, evento.inicioSubmissao)
+                && Objects.equals(fimSubmissao, evento.fimSubmissao);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nome, cidade, periodo);
+        return Objects.hash(nome, cidade, periodo, inicioSubmissao, fimSubmissao);
     }
 
     @Override
@@ -57,5 +84,11 @@ public class Evento {
             throw new DadosInvalidosException(mensagem);
         }
         return valor.trim();
+    }
+
+    private static void validarJanelaSubmissao(LocalDate inicio, LocalDate fim) {
+        if (fim.isBefore(inicio)) {
+            throw new DadosInvalidosException("Fim da submissão não pode ser anterior ao início.");
+        }
     }
 }
