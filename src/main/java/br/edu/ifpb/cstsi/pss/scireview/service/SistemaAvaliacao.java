@@ -23,7 +23,10 @@ public class SistemaAvaliacao {
 
     public List<Artigo> getArtigosPorEvento(Evento evento) {
         return artigos.stream()
-                .filter(a -> a.getEvento().equals(evento))
+                .filter(a -> {
+                    Evento eventoArtigo = a.getEvento();
+                    return eventoArtigo != null && eventoArtigo.equals(evento);
+                })
                 .collect(Collectors.toList());
     }
 
