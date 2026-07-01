@@ -4,7 +4,9 @@ import br.edu.ifpb.cstsi.pss.scireview.exception.EmailDuplicadoException;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,6 +34,10 @@ public class CadastroUsuario {
 
     public Optional<Usuario> buscarPorEmail(String email) {
         return Optional.ofNullable(usuariosPorEmail.get(normalizarChaveEmail(email)));
+    }
+
+    public List<Usuario> listarTodos() {
+        return new ArrayList<>(usuariosPorEmail.values());
     }
 
     private String normalizarChaveEmail(String email) {

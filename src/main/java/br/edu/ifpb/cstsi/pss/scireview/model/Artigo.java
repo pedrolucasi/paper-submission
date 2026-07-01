@@ -68,6 +68,22 @@ public class Artigo {
         estado.rejeitar(this);
     }
 
+    public String getEmailAutor() {
+        return autor.getEmail();
+    }
+
+    public Evento getEvento() {
+        return null; // Será implementado quando associar artigo ao evento
+    }
+
+    public String getCategoria() {
+        return "Full Paper"; // Será implementado quando associar artigo ao evento
+    }
+
+    public String getTitulo() {
+        return nome;
+    }
+
     @Override
     public boolean equals(Object objeto) {
         if (this == objeto) {

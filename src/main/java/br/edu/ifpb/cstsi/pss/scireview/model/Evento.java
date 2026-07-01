@@ -1,9 +1,11 @@
 package br.edu.ifpb.cstsi.pss.scireview.model;
 
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
+import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Evento {
 
@@ -12,6 +14,7 @@ public class Evento {
     private final String periodo;
     private final LocalDate inicioSubmissao;
     private final LocalDate fimSubmissao;
+    private CategoriaArtigo categoria;
 
     public Evento(
             String nome,
@@ -26,6 +29,24 @@ public class Evento {
         this.inicioSubmissao = Objects.requireNonNull(inicioSubmissao, "Início da submissão é obrigatório.");
         this.fimSubmissao = Objects.requireNonNull(fimSubmissao, "Fim da submissão é obrigatório.");
         validarJanelaSubmissao(this.inicioSubmissao, this.fimSubmissao);
+    }
+
+    public void definirCategoria(CategoriaArtigo categoria) {
+        if (categoria == null) {
+            throw new DadosInvalidosException("Categoria do evento é obrigatória.");
+        }
+        if (this.categoria != null) {
+            throw new DadosInvalidosException("A categoria do evento já foi definida.");
+        }
+        this.categoria = categoria;
+    }
+
+    public Optional<CategoriaArtigo> getCategoria() {
+        return Optional.ofNullable(categoria);
+    }
+
+    public boolean possuiCategoria() {
+        return categoria != null;
     }
 
     public String getNome() {
