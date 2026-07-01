@@ -8,17 +8,26 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.observer.Observer;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class GerenciadorEvento {
+
     private Evento eventoAtual;
     private List<Observer> observadores = new ArrayList<>();
+    private final List<Runnable> acoesAoLimparEstado = new ArrayList<>();
 
-    public Evento startNovoEvento(String nome, String cidade, String periodo) {
+    public Evento startNovoEvento(
+            String nome,
+            String cidade,
+            String periodo,
+            LocalDate inicioSubmissao,
+            LocalDate fimSubmissao
+    ) {
         limparEstadoAnterior();
-        eventoAtual = new Evento(nome, cidade, periodo);
+        eventoAtual = new Evento(nome, cidade, periodo, inicioSubmissao, fimSubmissao);
         notificarObservadores("EVENTO_INICIADO", eventoAtual);
         return eventoAtual;
     }
@@ -31,10 +40,16 @@ public class GerenciadorEvento {
         Evento evento = getEventoAtual().orElseThrow(() ->
                 new DadosInvalidosException("Não há evento ativo para definir a categoria."));
         evento.definirCategoria(categoria);
+    }
+
     public void finalizarCicloRevisoes() {
         if (eventoAtual != null) {
             notificarObservadores("CICLO_REVISOES_FINALIZADO", eventoAtual);
         }
+    }
+
+    public void aoLimparEstado(Runnable acao) {
+        acoesAoLimparEstado.add(acao);
     }
 
     public void adicionarObserver(Observer observer) {
@@ -61,5 +76,6 @@ public class GerenciadorEvento {
 
     private void limparEstadoAnterior() {
         eventoAtual = null;
+        acoesAoLimparEstado.forEach(Runnable::run);
     }
 }

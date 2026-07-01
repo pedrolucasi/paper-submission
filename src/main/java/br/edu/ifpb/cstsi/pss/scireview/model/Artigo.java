@@ -1,36 +1,132 @@
 package br.edu.ifpb.cstsi.pss.scireview.model;
 
-public class Artigo {
-    private int id;
-    private String titulo;
-    private String resumo;
-    private String emailAutor;
-    private StatusArtigo status;
-    private String categoria;
-    private Evento evento;
-    private static int contadorId = 0;
+import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
+import br.edu.ifpb.cstsi.pss.scireview.model.estado.EstadoArtigo;
+import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
+import br.edu.ifpb.cstsi.pss.scireview.model.estado.Submetido;
 
-    public Artigo(String titulo, String resumo, String emailAutor, String categoria, Evento evento) {
-        this.id = ++contadorId;
-        this.titulo = titulo;
-        this.resumo = resumo;
-        this.emailAutor = emailAutor;
-        this.status = StatusArtigo.SUBMETIDO;
-        this.categoria = categoria;
-        this.evento = evento;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+public class Artigo {
+
+    private final String id;
+    private final String nome;
+    private final String resumo;
+    private final List<String> coautores;
+    private final Usuario autor;
+    private EstadoArtigo estado;
+
+    public Artigo(String id, String nome, String resumo, List<String> coautores, Usuario autor) {
+        this.id = validarId(id);
+        this.nome = validarTextoObrigatorio(nome, "Nome do artigo é obrigatório.");
+        this.resumo = validarTextoObrigatorio(resumo, "Resumo do artigo é obrigatório.");
+        this.coautores = validarCoautores(coautores);
+        this.autor = Objects.requireNonNull(autor, "Autor do artigo é obrigatório.");
+        this.estado = new Submetido();
     }
 
-    public int getId() { return id; }
-    public String getTitulo() { return titulo; }
-    public String getResumo() { return resumo; }
-    public String getEmailAutor() { return emailAutor; }
-    public StatusArtigo getStatus() { return status; }
-    public void setStatus(StatusArtigo status) { this.status = status; }
-    public String getCategoria() { return categoria; }
-    public Evento getEvento() { return evento; }
+    public String getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getResumo() {
+        return resumo;
+    }
+
+    public List<String> getCoautores() {
+        return Collections.unmodifiableList(coautores);
+    }
+
+    public Usuario getAutor() {
+        return autor;
+    }
+
+    public StatusArtigo getStatus() {
+        return estado.getStatus();
+    }
+
+    public void alterarEstado(EstadoArtigo novoEstado) {
+        this.estado = novoEstado;
+    }
+
+    public void enviarParaRevisao() {
+        estado.enviarParaRevisao(this);
+    }
+
+    public void aceitar() {
+        estado.aceitar(this);
+    }
+
+    public void rejeitar() {
+        estado.rejeitar(this);
+    }
+
+    public String getEmailAutor() {
+        return autor.getEmail();
+    }
+
+    public Evento getEvento() {
+        return null; // Será implementado quando associar artigo ao evento
+    }
+
+    public String getCategoria() {
+        return "Full Paper"; // Será implementado quando associar artigo ao evento
+    }
+
+    public String getTitulo() {
+        return nome;
+    }
 
     @Override
-    public String toString() {
-        return "Artigo #" + id + " - " + titulo + " (" + status + ")";
+    public boolean equals(Object objeto) {
+        if (this == objeto) {
+            return true;
+        }
+        if (objeto == null || getClass() != objeto.getClass()) {
+            return false;
+        }
+        Artigo artigo = (Artigo) objeto;
+        return Objects.equals(id, artigo.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    private static String validarId(String id) {
+        if (id == null || id.isBlank()) {
+            throw new DadosInvalidosException("Identificador do artigo é obrigatório.");
+        }
+        return id.trim();
+    }
+
+    private static String validarTextoObrigatorio(String valor, String mensagem) {
+        if (valor == null || valor.isBlank()) {
+            throw new DadosInvalidosException(mensagem);
+        }
+        return valor.trim();
+    }
+
+    private static List<String> validarCoautores(List<String> coautores) {
+        if (coautores == null || coautores.isEmpty()) {
+            throw new DadosInvalidosException("Coautores são obrigatórios.");
+        }
+
+        List<String> coautoresNormalizados = new ArrayList<>();
+        for (String coautor : coautores) {
+            if (coautor == null || coautor.isBlank()) {
+                throw new DadosInvalidosException("Nome de coautor não pode ser vazio.");
+            }
+            coautoresNormalizados.add(coautor.trim());
+        }
+        return List.copyOf(coautoresNormalizados);
     }
 }
