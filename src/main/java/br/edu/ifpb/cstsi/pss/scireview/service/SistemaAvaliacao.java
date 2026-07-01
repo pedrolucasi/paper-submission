@@ -74,8 +74,8 @@ public class SistemaAvaliacao {
         artigos.clear();
         revisoes.clear();
     }
-}
+
     public List<Revisao> getTodasRevisoes() {
-    return new ArrayList<>(revisoes);
+        return new ArrayList<>(revisoes);
     }
 }
