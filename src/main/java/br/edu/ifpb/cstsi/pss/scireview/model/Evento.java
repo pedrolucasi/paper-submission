@@ -1,19 +1,40 @@
 package br.edu.ifpb.cstsi.pss.scireview.model;
 
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
+import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class Evento {
 
     private final String nome;
     private final String cidade;
     private final String periodo;
+    private CategoriaArtigo categoria;
 
     public Evento(String nome, String cidade, String periodo) {
         this.nome = validarTextoObrigatorio(nome, "Nome do evento é obrigatório.");
         this.cidade = validarTextoObrigatorio(cidade, "Cidade do evento é obrigatória.");
         this.periodo = validarTextoObrigatorio(periodo, "Período do evento é obrigatório.");
+    }
+
+    public void definirCategoria(CategoriaArtigo categoria) {
+        if (categoria == null) {
+            throw new DadosInvalidosException("Categoria do evento é obrigatória.");
+        }
+        if (this.categoria != null) {
+            throw new DadosInvalidosException("A categoria do evento já foi definida.");
+        }
+        this.categoria = categoria;
+    }
+
+    public Optional<CategoriaArtigo> getCategoria() {
+        return Optional.ofNullable(categoria);
+    }
+
+    public boolean possuiCategoria() {
+        return categoria != null;
     }
 
     public String getNome() {
