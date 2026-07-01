@@ -37,7 +37,7 @@ public class SubmissaoArtigo {
         validarPrazo(eventoAtivo);
 
         String id = gerarIdUnico();
-        Artigo artigo = new Artigo(id, nomeArtigo, resumo, coautores, autor);
+        Artigo artigo = new Artigo(id, nomeArtigo, resumo, coautores, autor, eventoAtivo);
         artigosPorId.put(id, artigo);
         return artigo;
     }
