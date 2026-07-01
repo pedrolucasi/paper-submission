@@ -8,6 +8,8 @@ public interface EstadoArtigo {
 
     void enviarParaRevisao(Artigo artigo);
 
+    void concluirRevisao(Artigo artigo);
+
     void aceitar(Artigo artigo);
 
     void rejeitar(Artigo artigo);

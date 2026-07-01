@@ -63,6 +63,10 @@ public class Artigo {
         estado.enviarParaRevisao(this);
     }
 
+    public void concluirRevisao() {
+        estado.concluirRevisao(this);
+    }
+
     public void aceitar() {
         estado.aceitar(this);
     }

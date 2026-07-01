@@ -4,6 +4,7 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -169,6 +170,10 @@ public class DistribuicaoRevisores {
                     afinidadeTexto = "🟡 MÉDIA";
                 } else {
                     afinidadeTexto = "🟢 BAIXA";
+                }
+
+                if (artigo.getStatus() == StatusArtigo.SUBMETIDO) {
+                    artigo.enviarParaRevisao();
                 }
 
                 Revisao revisao = new Revisao(artigo, revisor);

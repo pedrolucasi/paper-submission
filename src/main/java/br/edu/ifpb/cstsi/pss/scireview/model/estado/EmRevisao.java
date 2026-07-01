@@ -9,6 +9,11 @@ public class EmRevisao extends EstadoArtigoBase {
     }
 
     @Override
+    public void concluirRevisao(Artigo artigo) {
+        artigo.alterarEstado(new Revisado());
+    }
+
+    @Override
     public void aceitar(Artigo artigo) {
         artigo.alterarEstado(new Aceito());
     }
