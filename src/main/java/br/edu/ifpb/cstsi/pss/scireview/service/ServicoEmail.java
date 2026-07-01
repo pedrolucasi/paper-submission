@@ -28,7 +28,7 @@ public class ServicoEmail implements Observer {
     public void atualizar(String evento, Object dados) {
         if ("CICLO_REVISOES_FINALIZADO".equals(evento)) {
             Evento eventoAtual = (Evento) dados;
-            System.out.println("\n>>> NOTIFICANDO AUTORES SOBRE O RESULTADO DAS AVALIAÇÕES <<<\n");
+            System.out.println("\n>>> NOTIFICANDO AUTORES SOBRE O RESULTADO DAS AVALIACOES <<<\n");
             notificarTodosAutores(eventoAtual);
         }
     }
@@ -70,7 +70,7 @@ public class ServicoEmail implements Observer {
         System.out.println("\n=== ENVIANDO E-MAIL REAL ===");
         System.out.println("Para: " + notificacao.getDestinatario());
         System.out.println("Assunto: " + notificacao.getTitulo());
-        System.out.println("Conteúdo:\n" + notificacao.getConteudo());
+        System.out.println("Conteudo:\n" + notificacao.getConteudo());
         System.out.println("================================\n");
     }
 }
