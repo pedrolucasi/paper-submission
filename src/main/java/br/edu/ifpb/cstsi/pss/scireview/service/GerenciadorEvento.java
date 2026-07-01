@@ -38,7 +38,7 @@ public class GerenciadorEvento {
                     "Apenas o coordenador pode definir a categoria do evento.");
         }
         Evento evento = getEventoAtual().orElseThrow(() ->
-                new DadosInvalidosException("Não há evento ativo para definir a categoria."));
+                new DadosInvalidosException("Nao ha evento ativo para definir a categoria."));
         evento.definirCategoria(categoria);
     }
 
@@ -74,7 +74,12 @@ public class GerenciadorEvento {
         return eventoAtual != null;
     }
 
-    private void limparEstadoAnterior() {
+    public void limparEstadoAnterior() {
+        eventoAtual = null;
+        acoesAoLimparEstado.forEach(Runnable::run);
+    }
+
+    private void limparEstadoInterno() {
         eventoAtual = null;
         acoesAoLimparEstado.forEach(Runnable::run);
     }

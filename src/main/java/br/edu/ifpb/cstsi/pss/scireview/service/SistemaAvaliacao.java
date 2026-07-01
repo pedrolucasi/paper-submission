@@ -45,4 +45,8 @@ public class SistemaAvaliacao {
     public void adicionarRevisao(Revisao revisao) {
         revisoes.add(revisao);
     }
+
+    public List<Revisao> getTodasRevisoes() {
+    return new ArrayList<>(revisoes);
+    }
 }
