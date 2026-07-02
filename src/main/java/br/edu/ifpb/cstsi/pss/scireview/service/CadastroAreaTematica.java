@@ -50,6 +50,10 @@ public class CadastroAreaTematica {
         return Collections.unmodifiableCollection(areasPorNome.values());
     }
 
+    public void limpar() {
+        areasPorNome.clear();
+    }
+
     private static void validarCoordenador(Usuario solicitante) {
         if (solicitante == null || !solicitante.possuiPapel(Papel.COORDENADOR)) {
             throw new AcessoNaoAutorizadoException(

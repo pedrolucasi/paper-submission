@@ -38,4 +38,8 @@ public class ComiteTecnico {
     public int quantidadeRevisores() {
         return revisores.size();
     }
+
+    public void limpar() {
+        revisores.clear();
+    }
 }

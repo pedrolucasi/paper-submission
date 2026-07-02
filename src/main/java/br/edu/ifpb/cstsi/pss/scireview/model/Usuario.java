@@ -66,6 +66,10 @@ public class Usuario {
         areasDeInteresse.add(area);
     }
 
+    public void limparAreasDeInteresse() {
+        areasDeInteresse.clear();
+    }
+
     public boolean possuiAreaDeInteresse(AreaTematica area) {
         return areasDeInteresse.contains(area);
     }

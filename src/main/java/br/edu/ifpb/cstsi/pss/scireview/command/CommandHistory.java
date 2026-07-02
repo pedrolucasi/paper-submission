@@ -79,8 +79,12 @@ public class CommandHistory {
     }
 
     public void limparHistorico() {
+        limpar();
+        System.out.println("[SISTEMA] Historico limpo.");
+    }
+
+    public void limpar() {
         historico.clear();
         desfeitos.clear();
-        System.out.println("[SISTEMA] Historico limpo.");
     }
 }

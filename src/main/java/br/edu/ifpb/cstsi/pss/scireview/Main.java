@@ -63,6 +63,12 @@ public class Main {
         RevisaoArtigo revisaoArtigo = new RevisaoArtigo(
                 sistemaAvaliacao, cadastroAreaTematica, gerenciadorEvento);
 
+        // RF01 - Limpeza completa ao iniciar novo evento
+        gerenciadorEvento.aoLimparEstado(cadastroAreaTematica::limpar);
+        gerenciadorEvento.aoLimparEstado(comiteTecnico::limpar);
+        gerenciadorEvento.aoLimparEstado(cadastroUsuario::limparAreasDeInteresseDosRevisores);
+        gerenciadorEvento.aoLimparEstado(historico::limpar);
+
         // E1 - Carga de dados via CSV
         CsvDataLoader csvDataLoader = new CsvDataLoader();
         DadosCarregados dados = csvDataLoader.carregar();
@@ -239,6 +245,28 @@ public class Main {
 
         System.out.println("\n[DASHBOARD] Exibindo dados finais:");
         dashboard.exibirDashboard();
+
+        // RF01 - Demonstracao: novo evento descarta dados do evento anterior
+        System.out.println("\n[RF01] Iniciando novo evento (limpeza automatica do anterior)...");
+        System.out.println("   Antes  -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
+                + " | areas: " + cadastroAreaTematica.listar().size()
+                + " | comite: " + comiteTecnico.quantidadeRevisores()
+                + " | comandos: " + historico.getHistorico().size());
+
+        IniciarEventoCommand novoEvento = new IniciarEventoCommand(
+                gerenciadorEvento, coordenador,
+                "Workshop de Pesquisa Aplicada - 2027",
+                "Joao Pessoa - PB",
+                "10 a 12 de junho de 2027",
+                hoje.minusDays(10),
+                hoje.plusDays(50)
+        );
+        novoEvento.executar();
+
+        System.out.println("   Depois -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
+                + " | areas: " + cadastroAreaTematica.listar().size()
+                + " | comite: " + comiteTecnico.quantidadeRevisores()
+                + " | comandos: " + historico.getHistorico().size() + " (apenas o novo evento)");
 
         System.out.println("\n[FIM] Programa finalizado.");
     }
