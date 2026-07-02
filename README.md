@@ -1,6 +1,33 @@
 ## 📄 SciReview - Sistema de Submissão de Artigos
 
-Sistema de Submissão de Artigos Científicos para a disciplina de Padrões de Projeto de Software (PPS) do Curso Superior de Sistemas para Internet do Instituto Federal da Paraíba.
+Boas vindas ao repositório do projeto SciReview, desenvolvido como trabalho final da disciplina de Padrões de Projeto de Software, do curso de Sistemas para Internet no instituto Federal da Paraíba (IFPB).
+
+A aplicação consiste em um sistema de terminal que gerencia todo o fluxo de submissão e avaliação por pares de artigos científicos em um evento acadêmico, seguindo o protocolo *blind review* — autores e revisores permanecem anônimos entre si.
+
+O sistema gira em torno de três papéis:
+
+- **Coordenador (chair):** prepara o evento, define a categoria dos artigos (Full Paper, Short Paper ou Demo), cadastra as áreas temáticas e registra os revisores do comitê técnico.
+- **Autor:** submete artigos (título, resumo, coautores e áreas de interesse) dentro do prazo e acompanha o status de cada submissão.
+- **Revisor:** declara suas áreas de interesse e emite pareceres sobre os artigos que lhe são atribuídos.
+
+Cada artigo percorre um ciclo de vida bem definido — **submetido → em revisão → revisado → aceito/rejeitado**. A distribuição dos artigos aos revisores é automática, equilibrando a carga e priorizando a afinidade de área, sem que um revisor receba o próprio trabalho. Ao final do ciclo, os autores são notificados por e-mail com o parecer consolidado dos revisores.
+
+**Disciplina:** Padrões de Projeto de Software — 5º período (Sistemas para Internet, IFPB)
+**Professor:** Alex Cunha
+**Equipe:** Suetone Carneiro, Pedro Lucas e Pedro Arthur
+
+## 🧩 Padrões de Projeto aplicados
+
+A solução emprega **seis padrões de projeto**, cada um resolvendo uma necessidade concreta do domínio. Os diagramas de classe de cada padrão (PlantUML) estão em [`docs/diagramas/padroes/`](docs/diagramas/padroes/).
+
+| # | Padrão | Onde está (classes) | RF / uso |
+|---|--------|---------------------|----------|
+| 1 | **State** | `model.estado`: `EstadoArtigo`, `Submetido`, `EmRevisao`, `Revisado`, `Aceito`, `Rejeitado` (contexto: `Artigo`) | **RF05** — ciclo de vida/status do artigo, com transições válidas garantidas pelo próprio estado |
+| 2 | **Strategy** | `model.categoria`: `CategoriaArtigo`, `FullPaper`, `ShortPaper`, `Demo` (contexto: `Evento`; consumo: `SubmissaoArtigo`) | **RF04** — regras de submissão por categoria (limite de páginas e resumo), sem `if/else` por tipo |
+| 3 | **Observer** | `observer.Observer`, `service.ServicoEmail` (observer), `service.GerenciadorEvento.notificarObservadores()` (subject) | **RF09** — notificação por e-mail aos autores ao final do ciclo de revisões |
+| 4 | **Template Method** | `service.GeradorEmail` → `EmailAceite` / `EmailRejeicao` | **RF09** — corpo do e-mail: esqueleto fixo (`gerarEmail`) com variações por resultado (aceite/rejeição) |
+| 5 | **Command** | `command.Command` + os sete `*Command`, orquestrados por `command.CommandHistory` (invoker) | **RF10** — ações do coordenador encapsuladas, auditáveis e com *undo* |
+| 6 | **Singleton** | `command.CommandHistory.getInstance()` | **RF10** — histórico único e global de ações em toda a aplicação |
 
 ## Pré-requisitos
 
@@ -27,12 +54,6 @@ cd paper-submission
 
 ```bash
 mvn clean compile
-```
-
-### Executar os testes
-
-```bash
-mvn test
 ```
 
 ### Gerar o pacote (JAR)
