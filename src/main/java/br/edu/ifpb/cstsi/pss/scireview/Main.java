@@ -11,7 +11,6 @@ import br.edu.ifpb.cstsi.pss.scireview.command.SubmeterArtigoCommand;
 import br.edu.ifpb.cstsi.pss.scireview.dashboard.Dashboard;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
-import br.edu.ifpb.cstsi.pss.scireview.model.Avaliacao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
@@ -22,6 +21,7 @@ import br.edu.ifpb.cstsi.pss.scireview.service.CadastroUsuario;
 import br.edu.ifpb.cstsi.pss.scireview.service.ComiteTecnico;
 import br.edu.ifpb.cstsi.pss.scireview.service.DistribuicaoRevisores;
 import br.edu.ifpb.cstsi.pss.scireview.service.GerenciadorEvento;
+import br.edu.ifpb.cstsi.pss.scireview.service.RevisaoArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.service.ServicoEmail;
 import br.edu.ifpb.cstsi.pss.scireview.service.SistemaAvaliacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
@@ -29,6 +29,7 @@ import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class Main {
@@ -51,6 +52,7 @@ public class Main {
 
         Dashboard dashboard = new Dashboard(sistemaAvaliacao, cadastroUsuario);
         DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(sistemaAvaliacao, cadastroAreaTematica);
+        RevisaoArtigo revisaoArtigo = new RevisaoArtigo(sistemaAvaliacao);
 
         // RF02 - Cadastro de usuarios
         Usuario coordenador = cadastroUsuario.cadastrar(
@@ -128,8 +130,10 @@ public class Main {
         SubmeterArtigoCommand submeter1 = new SubmeterArtigoCommand(
                 submissaoArtigo, autor1,
                 "IA Aplicada a Saude com Machine Learning",
-                "Este artigo explora aplicacoes de Inteligencia Artificial e Machine Learning na area da saude...",
-                List.of("coautor1@email.com")
+                "Este artigo explora aplicacoes de Inteligencia Artificial e Machine Learning na area da saude, "
+                        + "apresentando metodologia, experimentos e resultados obtidos ao longo da pesquisa.",
+                List.of("coautor1@email.com"),
+                10
         );
         submeter1.executar();
         artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(0));
@@ -137,8 +141,10 @@ public class Main {
         SubmeterArtigoCommand submeter2 = new SubmeterArtigoCommand(
                 submissaoArtigo, autor1,
                 "Visao Computacional para Diagnostico por Imagem",
-                "Utilizacao de tecnicas de Visao Computacional para auxiliar no diagnostico medico...",
-                List.of("coautor2@email.com")
+                "Utilizacao de tecnicas de Visao Computacional para auxiliar no diagnostico medico por imagem, "
+                        + "detalhando o pipeline proposto e a avaliacao experimental conduzida.",
+                List.of("coautor2@email.com"),
+                8
         );
         submeter2.executar();
         artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(1));
@@ -146,8 +152,10 @@ public class Main {
         SubmeterArtigoCommand submeter3 = new SubmeterArtigoCommand(
                 submissaoArtigo, autor2,
                 "Analise de Dados em Sistemas de Saude",
-                "Aplicacao de Ciencia de Dados para analise de prontuarios eletronicos...",
-                List.of("coautor3@email.com")
+                "Aplicacao de Ciencia de Dados para analise de prontuarios eletronicos em sistemas de saude, "
+                        + "com discussao sobre coleta, tratamento e interpretacao dos dados clinicos.",
+                List.of("coautor3@email.com"),
+                12
         );
         submeter3.executar();
         artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(0));
@@ -155,8 +163,10 @@ public class Main {
         SubmeterArtigoCommand submeter4 = new SubmeterArtigoCommand(
                 submissaoArtigo, autor2,
                 "Deep Learning para Processamento de Linguagem Natural",
-                "Uso de Deep Learning para processamento de linguagem natural em textos medicos...",
-                List.of("coautor4@email.com")
+                "Uso de Deep Learning para processamento de linguagem natural em textos medicos, "
+                        + "abordando arquitetura, treinamento do modelo e as metricas de desempenho alcancadas.",
+                List.of("coautor4@email.com"),
+                9
         );
         submeter4.executar();
         artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(1));
@@ -172,23 +182,39 @@ public class Main {
                 distribuicao, artigos, revisores, coordenador);
         distribuir.executar();
 
-        // RF07 - Realizar avaliacoes
+        // Persiste as atribuicoes da distribuicao como revisoes pendentes
+        Map<Artigo, List<Usuario>> atribuicoes = distribuir.getDistribuicaoRealizada();
+        for (Map.Entry<Artigo, List<Usuario>> entrada : atribuicoes.entrySet()) {
+            for (Usuario revisor : entrada.getValue()) {
+                sistemaAvaliacao.adicionarRevisao(new Revisao(entrada.getKey(), revisor));
+            }
+        }
+
+        // RF07 - Conclusao de revisao: cada revisor emite seu parecer via o servico
         for (Revisao revisao : sistemaAvaliacao.getTodasRevisoes()) {
-            if (revisao.getArtigo().getTitulo().contains("Saude") ||
-                revisao.getArtigo().getTitulo().contains("Diagnostico")) {
-                revisao.setAvaliacao(new Avaliacao(
-                        "Excelente contribuicao para a area",
-                        "Poderia melhorar a metodologia",
-                        Veredito.ACEITO
-                ));
-                revisao.getArtigo().aceitar();
+            boolean recomendado = revisao.getArtigo().getTitulo().contains("Saude")
+                    || revisao.getArtigo().getTitulo().contains("Diagnostico");
+            revisaoArtigo.emitirParecer(
+                    revisao.getRevisor(),
+                    revisao.getArtigo().getId(),
+                    recomendado ? "Excelente contribuicao para a area" : "Boa proposta, mas com limitacoes",
+                    recomendado ? "Poderia melhorar a metodologia" : "Amostra pequena, faltam dados",
+                    recomendado ? Veredito.ACEITO : Veredito.FRACAMENTE_RECUSADO);
+        }
+
+        // Decisao final do coordenador: aceita/rejeita cada artigo revisado conforme os pareceres
+        for (Artigo artigo : artigos) {
+            List<Revisao> revisoesDoArtigo = sistemaAvaliacao.getRevisoesPorArtigo(artigo);
+            long positivas = revisoesDoArtigo.stream()
+                    .filter(Revisao::isConcluida)
+                    .map(revisao -> revisao.getAvaliacao().getVeredito())
+                    .filter(v -> v == Veredito.ACEITO || v == Veredito.FRACAMENTE_ACEITO)
+                    .count();
+            long concluidas = revisoesDoArtigo.stream().filter(Revisao::isConcluida).count();
+            if (positivas * 2 >= concluidas) {
+                artigo.aceitar();
             } else {
-                revisao.setAvaliacao(new Avaliacao(
-                        "Boa proposta, mas com limitacoes",
-                        "Amostra pequena, faltam dados",
-                        Veredito.FRACAMENTE_RECUSADO
-                ));
-                revisao.getArtigo().rejeitar();
+                artigo.rejeitar();
             }
         }
 
