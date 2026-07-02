@@ -1,29 +1,44 @@
 package br.edu.ifpb.cstsi.pss.scireview.service;
 
-import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
+import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
-import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class DistribuicaoRevisores {
 
+    private static final int REVISORES_POR_ARTIGO = 2;
+
     private final SistemaAvaliacao sistemaAvaliacao;
-    private final CadastroAreaTematica cadastroAreaTematica;
+    private final ResolverAreasArtigo resolverAreasArtigo;
+    private final ServicoEmail servicoEmail;
 
     public DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao, CadastroAreaTematica cadastroAreaTematica) {
+        this(sistemaAvaliacao, new ResolverAreasArtigo(cadastroAreaTematica), null);
+    }
+
+    public DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao,
+                                 CadastroAreaTematica cadastroAreaTematica,
+                                 ServicoEmail servicoEmail) {
+        this(sistemaAvaliacao, new ResolverAreasArtigo(cadastroAreaTematica), servicoEmail);
+    }
+
+    DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao,
+                          ResolverAreasArtigo resolverAreasArtigo,
+                          ServicoEmail servicoEmail) {
         this.sistemaAvaliacao = sistemaAvaliacao;
-        this.cadastroAreaTematica = cadastroAreaTematica;
+        this.resolverAreasArtigo = resolverAreasArtigo;
+        this.servicoEmail = servicoEmail;
     }
 
     public Map<Artigo, List<Usuario>> distribuirArtigos(List<Artigo> artigos, List<Usuario> revisores) {
@@ -31,54 +46,66 @@ public class DistribuicaoRevisores {
             return new HashMap<>();
         }
 
+        Map<Usuario, Integer> cargaPorRevisor = new HashMap<>();
+        for (Usuario revisor : revisores) {
+            cargaPorRevisor.put(revisor, 0);
+        }
+
         Map<Artigo, List<Usuario>> distribuicao = new LinkedHashMap<>();
-        List<Usuario> revisoresDisponiveis = new ArrayList<>(revisores);
 
         for (Artigo artigo : artigos) {
-            List<Usuario> revisoresParaArtigo = selecionarRevisores(artigo, revisoresDisponiveis);
-            distribuicao.put(artigo, revisoresParaArtigo);
-            for (Usuario revisor : revisoresParaArtigo) {
+            List<Usuario> revisoresSelecionados = selecionarRevisores(artigo, revisores, cargaPorRevisor);
+            distribuicao.put(artigo, revisoresSelecionados);
+
+            LocalDate prazoRevisao = calcularPrazoRevisao(artigo);
+            for (Usuario revisor : revisoresSelecionados) {
                 sistemaAvaliacao.adicionarRevisao(new Revisao(artigo, revisor));
+                cargaPorRevisor.merge(revisor, 1, Integer::sum);
+                notificarRevisor(revisor, artigo, prazoRevisao);
             }
         }
 
         return distribuicao;
     }
 
-    private List<Usuario> selecionarRevisores(Artigo artigo, List<Usuario> revisoresDisponiveis) {
+    private List<Usuario> selecionarRevisores(Artigo artigo,
+                                              List<Usuario> revisores,
+                                              Map<Usuario, Integer> cargaPorRevisor) {
         Set<String> autoresDoArtigo = obterAutoresDoArtigo(artigo);
+        Set<AreaTematica> areasDoArtigo = resolverAreasArtigo.resolver(artigo);
+        List<Usuario> selecionados = new ArrayList<>();
 
-        List<Usuario> revisoresElegiveis = revisoresDisponiveis.stream()
-                .filter(revisor -> !autoresDoArtigo.contains(revisor.getEmail()))
-                .collect(Collectors.toList());
+        Comparator<Usuario> porAfinidadeECarga = Comparator
+                .comparingInt((Usuario revisor) -> calcularAfinidade(revisor, areasDoArtigo))
+                .reversed()
+                .thenComparingInt(revisor -> cargaPorRevisor.getOrDefault(revisor, 0))
+                .thenComparing(Usuario::getEmail);
 
-        if (revisoresElegiveis.isEmpty()) {
-            return new ArrayList<>();
+        for (int i = 0; i < REVISORES_POR_ARTIGO; i++) {
+            Usuario escolhido = revisores.stream()
+                    .filter(revisor -> !autoresDoArtigo.contains(revisor.getEmail()))
+                    .filter(revisor -> !selecionados.contains(revisor))
+                    .sorted(porAfinidadeECarga)
+                    .findFirst()
+                    .orElse(null);
+
+            if (escolhido == null) {
+                break;
+            }
+            selecionados.add(escolhido);
         }
 
-        Map<Usuario, Integer> afinidadePorRevisor = new LinkedHashMap<>();
-        Set<AreaTematica> areasDoArtigo = obterAreasDoArtigo(artigo);
-
-        for (Usuario revisor : revisoresElegiveis) {
-            int afinidade = calcularAfinidade(revisor, areasDoArtigo);
-            afinidadePorRevisor.put(revisor, afinidade);
-        }
-
-        List<Usuario> revisoresOrdenados = revisoresElegiveis.stream()
-                .sorted((r1, r2) -> Integer.compare(
-                        afinidadePorRevisor.get(r2),
-                        afinidadePorRevisor.get(r1)
-                ))
-                .collect(Collectors.toList());
-
-        int quantidadeRevisores = calcularQuantidadeRevisores(artigo);
-        return revisoresOrdenados.stream()
-                .limit(quantidadeRevisores)
-                .collect(Collectors.toList());
+        return selecionados;
     }
 
-    private int calcularQuantidadeRevisores(Artigo artigo) {
-        return 2;
+    private void notificarRevisor(Usuario revisor, Artigo artigo, LocalDate prazoRevisao) {
+        if (servicoEmail != null) {
+            servicoEmail.notificarRevisorAtribuicao(revisor, artigo, prazoRevisao);
+        }
+    }
+
+    private LocalDate calcularPrazoRevisao(Artigo artigo) {
+        return artigo.getEvento().getFimSubmissao().plusDays(30);
     }
 
     private Set<String> obterAutoresDoArtigo(Artigo artigo) {
@@ -88,31 +115,9 @@ public class DistribuicaoRevisores {
         return autores;
     }
 
-    private Set<AreaTematica> obterAreasDoArtigo(Artigo artigo) {
-        Set<AreaTematica> areas = new HashSet<>();
-        String titulo = artigo.getTitulo().toLowerCase();
-        String resumo = artigo.getResumo().toLowerCase();
-
-        for (AreaTematica area : cadastroAreaTematica.listar()) {
-            String nomeArea = area.getNome().toLowerCase();
-            if (titulo.contains(nomeArea) || resumo.contains(nomeArea)) {
-                areas.add(area);
-            }
-        }
-
-        if (areas.isEmpty()) {
-            List<AreaTematica> todasAreas = new ArrayList<>(cadastroAreaTematica.listar());
-            if (!todasAreas.isEmpty()) {
-                areas.add(todasAreas.get(0));
-            }
-        }
-
-        return areas;
-    }
-
     private int calcularAfinidade(Usuario revisor, Set<AreaTematica> areasDoArtigo) {
         Set<AreaTematica> areasRevisor = revisor.getAreasDeInteresse();
-        if (areasRevisor.isEmpty()) {
+        if (areasRevisor.isEmpty() || areasDoArtigo.isEmpty()) {
             return 0;
         }
 
@@ -122,101 +127,34 @@ public class DistribuicaoRevisores {
                 afinidade++;
             }
         }
-
         return afinidade;
     }
 
-    public void distribuirAutomaticamente(List<Artigo> artigos, List<Usuario> revisores) {
-        if (artigos.isEmpty() || revisores.isEmpty()) {
-            System.out.println("Não há artigos ou revisores para distribuir.");
-            return;
-        }
-
-        List<Usuario> revisoresCopia = new ArrayList<>(revisores);
-        Collections.shuffle(revisoresCopia);
-
-        int totalArtigos = artigos.size();
-        int totalRevisores = revisoresCopia.size();
-        int artigosPorRevisor = totalArtigos / totalRevisores;
-        int sobra = totalArtigos % totalRevisores;
-
-        Map<Usuario, List<Artigo>> cargaPorRevisor = new LinkedHashMap<>();
-        for (Usuario revisor : revisoresCopia) {
-            cargaPorRevisor.put(revisor, new ArrayList<>());
-        }
-
-        List<Artigo> artigosNaoDistribuidos = new ArrayList<>(artigos);
-        int indiceRevisor = 0;
-
-        for (Artigo artigo : artigos) {
-            Usuario revisor = revisoresCopia.get(indiceRevisor % totalRevisores);
-            cargaPorRevisor.get(revisor).add(artigo);
-            indiceRevisor++;
-        }
-
-        for (Map.Entry<Usuario, List<Artigo>> entry : cargaPorRevisor.entrySet()) {
-            Usuario revisor = entry.getKey();
-            List<Artigo> artigosRevisor = entry.getValue();
-
-            System.out.println("\n🔍 Revisor: " + revisor.getEmail());
-            System.out.println("   Artigos atribuídos: " + artigosRevisor.size());
-
-            for (Artigo artigo : artigosRevisor) {
-                Set<AreaTematica> areasDoArtigo = obterAreasDoArtigo(artigo);
-                Set<AreaTematica> areasRevisor = revisor.getAreasDeInteresse();
-                int afinidade = calcularAfinidade(revisor, areasDoArtigo);
-
-                String afinidadeTexto;
-                if (afinidade >= 2) {
-                    afinidadeTexto = "🔴 ALTA";
-                } else if (afinidade == 1) {
-                    afinidadeTexto = "🟡 MÉDIA";
-                } else {
-                    afinidadeTexto = "🟢 BAIXA";
-                }
-
-                if (artigo.getStatus() == StatusArtigo.SUBMETIDO) {
-                    artigo.enviarParaRevisao();
-                }
-
-                Revisao revisao = new Revisao(artigo, revisor);
-                sistemaAvaliacao.adicionarRevisao(revisao);
-
-                System.out.println("   📄 " + artigo.getTitulo() + " (ID: " + artigo.getId() + ")");
-                System.out.println("      Afinidade: " + afinidadeTexto + " (" + afinidade + " tema(s) compatível(is))");
-                System.out.println("      Áreas do artigo: " + areasDoArtigo);
-                System.out.println("      Áreas do revisor: " + areasRevisor);
-            }
-        }
-
-        System.out.println("\n✅ Distribuição concluída!");
-        System.out.println("📊 Resumo:");
-        System.out.println("   Total de artigos: " + totalArtigos);
-        System.out.println("   Total de revisores: " + totalRevisores);
-        System.out.println("   Média de artigos por revisor: " + artigosPorRevisor + " (sobra: " + sobra + ")");
-    }
-
     public void exibirDistribuicao(Map<Artigo, List<Usuario>> distribuicao) {
-        System.out.println("\n╔════════════════════════════════════════════════════════════╗");
-        System.out.println("║           📋 DISTRIBUIÇÃO DE ARTIGOS POR REVISOR           ║");
-        System.out.println("╚════════════════════════════════════════════════════════════╝");
+        System.out.println("\n+--------------------------------------------------------+");
+        System.out.println("|           DISTRIBUICAO DE ARTIGOS POR REVISOR           |");
+        System.out.println("+--------------------------------------------------------+");
 
         for (Map.Entry<Artigo, List<Usuario>> entry : distribuicao.entrySet()) {
             Artigo artigo = entry.getKey();
-            List<Usuario> revisores = entry.getValue();
+            List<Usuario> revisoresAtribuidos = entry.getValue();
+            Set<AreaTematica> areasDoArtigo = resolverAreasArtigo.resolver(artigo);
 
-            System.out.println("\n📄 Artigo: " + artigo.getTitulo() + " (ID: " + artigo.getId() + ")");
+            System.out.println("\nArtigo: " + artigo.getTitulo() + " (ID: " + artigo.getId() + ")");
             System.out.println("   Autor: " + artigo.getAutor().getEmail());
             System.out.println("   Coautores: " + artigo.getCoautores());
 
-            if (revisores.isEmpty()) {
-                System.out.println("   ⚠️ Nenhum revisor disponível para este artigo.");
+            if (revisoresAtribuidos.isEmpty()) {
+                System.out.println("   Nenhum revisor disponivel para este artigo.");
             } else {
-                System.out.println("   👥 Revisores atribuídos:");
-                for (Usuario revisor : revisores) {
-                    Set<AreaTematica> areasDoArtigo = obterAreasDoArtigo(artigo);
+                System.out.println("   Revisores atribuidos:");
+                for (Usuario revisor : revisoresAtribuidos) {
                     int afinidade = calcularAfinidade(revisor, areasDoArtigo);
-                    System.out.println("      🔹 " + revisor.getEmail() + " (Afinidade: " + afinidade + ")");
+                    int carga = (int) sistemaAvaliacao.getTodasRevisoes().stream()
+                            .filter(r -> r.getRevisor().equals(revisor))
+                            .count();
+                    System.out.println("      - " + revisor.getEmail()
+                            + " (afinidade: " + afinidade + ", carga total: " + carga + ")");
                 }
             }
         }

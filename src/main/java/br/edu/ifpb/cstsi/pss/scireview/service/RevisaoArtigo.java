@@ -4,6 +4,7 @@ import br.edu.ifpb.cstsi.pss.scireview.exception.AcessoNaoAutorizadoException;
 import br.edu.ifpb.cstsi.pss.scireview.exception.DadosInvalidosException;
 import br.edu.ifpb.cstsi.pss.scireview.exception.ParecerJaEmitidoException;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
+import br.edu.ifpb.cstsi.pss.scireview.model.ArtigoParaRevisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Avaliacao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
@@ -16,20 +17,38 @@ import java.util.List;
 public class RevisaoArtigo {
 
     private final SistemaAvaliacao sistemaAvaliacao;
+    private final ResolverAreasArtigo resolverAreasArtigo;
 
     public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao) {
-        this.sistemaAvaliacao = sistemaAvaliacao;
+        this(sistemaAvaliacao, (ResolverAreasArtigo) null);
+    }
+
+    public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao, CadastroAreaTematica cadastroAreaTematica) {
+        this(sistemaAvaliacao, cadastroAreaTematica != null ? new ResolverAreasArtigo(cadastroAreaTematica) : null);
     }
 
     public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao, GerenciadorEvento gerenciadorEvento) {
-        this.sistemaAvaliacao = sistemaAvaliacao;
+        this(sistemaAvaliacao, (ResolverAreasArtigo) null);
         gerenciadorEvento.aoLimparEstado(sistemaAvaliacao::limpar);
     }
 
-    public List<Artigo> listarArtigosPendentes(Usuario revisor) {
+    public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao,
+                         CadastroAreaTematica cadastroAreaTematica,
+                         GerenciadorEvento gerenciadorEvento) {
+        this(sistemaAvaliacao, cadastroAreaTematica);
+        gerenciadorEvento.aoLimparEstado(sistemaAvaliacao::limpar);
+    }
+
+    private RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao, ResolverAreasArtigo resolverAreasArtigo) {
+        this.sistemaAvaliacao = sistemaAvaliacao;
+        this.resolverAreasArtigo = resolverAreasArtigo;
+    }
+
+    public List<ArtigoParaRevisao> listarArtigosPendentes(Usuario revisor) {
         validarRevisor(revisor);
         return sistemaAvaliacao.listarRevisoesPendentesDoRevisor(revisor).stream()
                 .map(Revisao::getArtigo)
+                .map(this::paraVisaoCega)
                 .toList();
     }
 
@@ -66,6 +85,18 @@ public class RevisaoArtigo {
             artigo.concluirRevisao();
         }
         return revisao;
+    }
+
+    private ArtigoParaRevisao paraVisaoCega(Artigo artigo) {
+        List<String> areas = resolverAreasArtigo != null
+                ? resolverAreasArtigo.nomesDasAreas(artigo)
+                : List.of();
+        return new ArtigoParaRevisao(
+                artigo.getId(),
+                artigo.getTitulo(),
+                artigo.getResumo(),
+                areas
+        );
     }
 
     private void validarRevisor(Usuario revisor) {

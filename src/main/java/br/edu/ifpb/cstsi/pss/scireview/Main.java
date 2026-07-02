@@ -56,8 +56,10 @@ public class Main {
         gerenciadorEvento.adicionarObserver(servicoEmail);
 
         Dashboard dashboard = new Dashboard(sistemaAvaliacao, cadastroUsuario);
-        DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(sistemaAvaliacao, cadastroAreaTematica);
-        RevisaoArtigo revisaoArtigo = new RevisaoArtigo(sistemaAvaliacao);
+        DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(
+                sistemaAvaliacao, cadastroAreaTematica, servicoEmail);
+        RevisaoArtigo revisaoArtigo = new RevisaoArtigo(
+                sistemaAvaliacao, cadastroAreaTematica, gerenciadorEvento);
 
         // E1 - Carga de dados via CSV
         CsvDataLoader csvDataLoader = new CsvDataLoader();
@@ -154,6 +156,13 @@ public class Main {
         DistribuirArtigosCommand distribuir = new DistribuirArtigosCommand(
                 distribuicao, artigos, revisores, coordenador);
         distribuir.executar();
+
+        // RF06 - Blind review: revisor ve apenas titulo, resumo e areas (sem autores)
+        if (!revisores.isEmpty()) {
+            System.out.println("\n[RF06] Artigos pendentes (visao cega) - " + revisores.get(0).getEmail());
+            revisaoArtigo.listarArtigosPendentes(revisores.get(0)).forEach(artigoCego ->
+                    System.out.println("   - " + artigoCego.titulo() + " | areas: " + artigoCego.areasTematicas()));
+        }
 
         // RF07 - Conclusao de revisao: cada revisor emite seu parecer via o servico
         for (Revisao revisao : sistemaAvaliacao.getTodasRevisoes()) {
