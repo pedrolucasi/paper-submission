@@ -32,10 +32,6 @@ public class DistribuirArtigosCommand implements Command {
         CommandHistory.getInstance().adicionar(this);
     }
 
-    public Map<Artigo, List<Usuario>> getDistribuicaoRealizada() {
-        return distribuicaoRealizada;
-    }
-
     @Override
     public void desfazer() {
         System.out.println("[DESFAZER] Distribuicao de artigos");

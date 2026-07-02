@@ -29,7 +29,6 @@ import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class Main {
@@ -181,14 +180,6 @@ public class Main {
         DistribuirArtigosCommand distribuir = new DistribuirArtigosCommand(
                 distribuicao, artigos, revisores, coordenador);
         distribuir.executar();
-
-        // Persiste as atribuicoes da distribuicao como revisoes pendentes
-        Map<Artigo, List<Usuario>> atribuicoes = distribuir.getDistribuicaoRealizada();
-        for (Map.Entry<Artigo, List<Usuario>> entrada : atribuicoes.entrySet()) {
-            for (Usuario revisor : entrada.getValue()) {
-                sistemaAvaliacao.adicionarRevisao(new Revisao(entrada.getKey(), revisor));
-            }
-        }
 
         // RF07 - Conclusao de revisao: cada revisor emite seu parecer via o servico
         for (Revisao revisao : sistemaAvaliacao.getTodasRevisoes()) {
