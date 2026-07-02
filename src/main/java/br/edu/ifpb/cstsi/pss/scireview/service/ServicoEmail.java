@@ -12,6 +12,7 @@ import br.edu.ifpb.cstsi.pss.scireview.observer.Observer;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Properties;
 
@@ -47,6 +48,26 @@ public class ServicoEmail implements Observer {
             Evento eventoAtual = (Evento) dados;
             System.out.println("\n[EMAIL] Notificando autores sobre o resultado das avaliacoes");
             notificarTodosAutores(eventoAtual);
+        }
+    }
+
+    public void notificarRevisorAtribuicao(Usuario revisor, Artigo artigo, LocalDate prazoRevisao) {
+        String titulo = "SciReview - Artigo atribuido para revisao";
+        String conteudo = """
+                Prezado(a) revisor,
+
+                Voce foi designado para revisar o artigo "%s" (ID: %s).
+                Prazo maximo para conclusao da revisao: %s.
+
+                Atenciosamente,
+                SciReview
+                """.formatted(artigo.getTitulo(), artigo.getId(), prazoRevisao);
+
+        Notificacao notificacao = new Notificacao(revisor.getEmail(), titulo, conteudo);
+        if (enviarEmailReal) {
+            enviarEmailReal(notificacao);
+        } else {
+            simularEnvioEmail(notificacao);
         }
     }
 
