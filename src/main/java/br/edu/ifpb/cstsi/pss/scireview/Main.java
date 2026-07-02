@@ -16,6 +16,7 @@ import br.edu.ifpb.cstsi.pss.scireview.loader.DadosCarregados;
 import br.edu.ifpb.cstsi.pss.scireview.loader.DadosEvento;
 import br.edu.ifpb.cstsi.pss.scireview.loader.DadosUsuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
+import br.edu.ifpb.cstsi.pss.scireview.model.HistoricoRevisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
@@ -176,6 +177,20 @@ public class Main {
                     recomendado ? "Excelente contribuicao para a area" : "Boa proposta, mas com limitacoes",
                     recomendado ? "Poderia melhorar a metodologia" : "Amostra pequena, faltam dados",
                     recomendado ? Veredito.ACEITO : Veredito.FRACAMENTE_RECUSADO);
+        }
+
+        // RF07 - Historico de avaliacoes concluidas por revisor (visao cega)
+        for (Usuario revisor : revisores) {
+            System.out.println("\n[RF07] Historico de revisoes - " + revisor.getEmail());
+            List<HistoricoRevisao> historicoRevisor = revisaoArtigo.listarHistoricoRevisoes(revisor);
+            if (historicoRevisor.isEmpty()) {
+                System.out.println("   (nenhuma revisao concluida)");
+            } else {
+                historicoRevisor.forEach(item -> System.out.println(
+                        "   - " + item.artigo().titulo()
+                                + " | veredito: " + item.veredito()
+                                + " | contribuicoes: " + item.contribuicoes()));
+            }
         }
 
         // Decisao final do coordenador: aceita/rejeita cada artigo revisado conforme os pareceres
