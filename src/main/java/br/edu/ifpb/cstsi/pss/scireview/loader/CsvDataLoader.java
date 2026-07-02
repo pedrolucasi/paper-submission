@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -19,6 +21,7 @@ public class CsvDataLoader {
 
     private static final String DELIMITADOR = ";";
     private final String diretorioBase;
+    private final Path baseFilesystem;
 
     public CsvDataLoader() {
         this("/dados");
@@ -26,6 +29,12 @@ public class CsvDataLoader {
 
     public CsvDataLoader(String diretorioBase) {
         this.diretorioBase = diretorioBase.endsWith("/") ? diretorioBase : diretorioBase + "/";
+        this.baseFilesystem = null;
+    }
+
+    public CsvDataLoader(Path baseFilesystem) {
+        this.diretorioBase = "/dados/";
+        this.baseFilesystem = baseFilesystem;
     }
 
     public DadosCarregados carregar() {
@@ -124,31 +133,53 @@ public class CsvDataLoader {
     }
 
     private List<String[]> lerCsv(String nomeArquivo) {
+        if (baseFilesystem != null) {
+            return lerCsvDoFilesystem(nomeArquivo);
+        }
+        return lerCsvDoClasspath(nomeArquivo);
+    }
+
+    private List<String[]> lerCsvDoFilesystem(String nomeArquivo) {
+        Path arquivo = baseFilesystem.resolve(nomeArquivo);
+        if (!Files.exists(arquivo)) {
+            throw new DadosInvalidosException("Arquivo CSV nao encontrado: " + arquivo);
+        }
+        try (BufferedReader reader = Files.newBufferedReader(arquivo, StandardCharsets.UTF_8)) {
+            return parseReader(reader);
+        } catch (IOException e) {
+            throw new DadosInvalidosException("Erro ao ler arquivo CSV: " + arquivo, e);
+        }
+    }
+
+    private List<String[]> lerCsvDoClasspath(String nomeArquivo) {
         String caminho = diretorioBase + nomeArquivo;
         InputStream inputStream = getClass().getResourceAsStream(caminho);
         if (inputStream == null) {
             throw new DadosInvalidosException("Arquivo CSV nao encontrado no classpath: " + caminho);
         }
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            List<String[]> linhas = new ArrayList<>();
-            String linha;
-            boolean cabecalho = true;
-            while ((linha = reader.readLine()) != null) {
-                linha = linha.trim();
-                if (linha.isEmpty() || linha.startsWith("#")) {
-                    continue;
-                }
-                if (cabecalho) {
-                    cabecalho = false;
-                    continue;
-                }
-                linhas.add(parseLinha(linha));
-            }
-            return linhas;
+            return parseReader(reader);
         } catch (IOException e) {
             throw new DadosInvalidosException("Erro ao ler arquivo CSV: " + caminho, e);
         }
+    }
+
+    private List<String[]> parseReader(BufferedReader reader) throws IOException {
+        List<String[]> linhas = new ArrayList<>();
+        String linha;
+        boolean cabecalho = true;
+        while ((linha = reader.readLine()) != null) {
+            linha = linha.trim();
+            if (linha.isEmpty() || linha.startsWith("#")) {
+                continue;
+            }
+            if (cabecalho) {
+                cabecalho = false;
+                continue;
+            }
+            linhas.add(parseLinha(linha));
+        }
+        return linhas;
     }
 
     private String[] parseLinha(String linha) {
