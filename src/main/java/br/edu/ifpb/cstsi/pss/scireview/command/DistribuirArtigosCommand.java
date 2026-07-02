@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.DistribuicaoRevisores;
 
 import java.time.LocalDateTime;
@@ -28,13 +29,13 @@ public class DistribuirArtigosCommand implements Command {
     @Override
     public void executar() {
         distribuicaoRealizada = distribuicao.distribuirArtigos(artigos, revisores);
-        System.out.println("[OK] Artigos distribuidos: " + artigos.size() + " artigos para " + revisores.size() + " revisores");
+        SaidaAplicacao.get().linha("[OK] Artigos distribuidos: " + artigos.size() + " artigos para " + revisores.size() + " revisores");
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
-        System.out.println("[DESFAZER] Distribuicao de artigos");
+        SaidaAplicacao.get().linha("[DESFAZER] Distribuicao de artigos");
     }
 
     @Override

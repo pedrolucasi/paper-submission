@@ -40,6 +40,12 @@ public class CadastroUsuario {
         return new ArrayList<>(usuariosPorEmail.values());
     }
 
+    public void limparAreasDeInteresseDosRevisores() {
+        usuariosPorEmail.values().stream()
+                .filter(usuario -> usuario.possuiPapel(Papel.REVISOR))
+                .forEach(Usuario::limparAreasDeInteresse);
+    }
+
     private String normalizarChaveEmail(String email) {
         return email.trim().toLowerCase();
     }

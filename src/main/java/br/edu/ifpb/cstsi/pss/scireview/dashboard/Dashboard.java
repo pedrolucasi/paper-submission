@@ -79,41 +79,6 @@ public class Dashboard {
                 .toList();
     }
 
-    public void exibirDashboard() {
-        DadosDashboard dados = consultarDados();
-
-        System.out.println("\n╔════════════════════════════════════════════════════════╗");
-        System.out.println("║                    📊 DASHBOARD                        ║");
-        System.out.println("║            RESULTADOS DO EVENTO                       ║");
-        System.out.println("╠════════════════════════════════════════════════════════╣");
-        System.out.printf("║ 📌 Total de Artigos Submetidos: %-28d ║%n", dados.getTotalArtigos());
-        System.out.printf("║ 👥 Total de Revisores: %-34d ║%n", dados.getTotalRevisores());
-        System.out.printf("║ ✅ Artigos Avaliados: %-36d ║%n", dados.getArtigosAvaliados());
-        System.out.printf("║ ⏳ Artigos Pendentes: %-36d ║%n", dados.getArtigosPendentes());
-        System.out.println("╠════════════════════════════════════════════════════════╣");
-
-        if (!dados.getPendenciasPorRevisor().isEmpty()) {
-            System.out.println("║ 📋 PENDÊNCIAS POR REVISOR:                          ║");
-            for (Map.Entry<Usuario, List<Artigo>> entry : dados.getPendenciasPorRevisor().entrySet()) {
-                Usuario revisor = entry.getKey();
-                List<Artigo> artigosPendentes = entry.getValue();
-                System.out.printf("║   🔹 %-35s ║%n", 
-                        revisor.getEmail().substring(0, Math.min(35, revisor.getEmail().length())));
-                System.out.printf("║      %d artigo(s) pendente(s)%n", artigosPendentes.size());
-                for (Artigo artigo : artigosPendentes) {
-                    String titulo = artigo.getTitulo();
-                    String info = "• ID: " + artigo.getId() + " | " + titulo;
-                    System.out.printf("║      %-41s ║%n", 
-                            info.substring(0, Math.min(41, info.length())));
-                }
-            }
-        } else {
-            System.out.println("║ 🎉 Nenhuma pendência!                               ║");
-            System.out.println("║ Todos os artigos foram avaliados!                   ║");
-        }
-        System.out.println("╚════════════════════════════════════════════════════════╝\n");
-    }
-
     public static class DadosDashboard {
         private final int totalArtigos;
         private final int totalRevisores;

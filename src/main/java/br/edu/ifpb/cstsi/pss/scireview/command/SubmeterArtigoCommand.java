@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
 
 import java.time.LocalDateTime;
@@ -35,14 +36,14 @@ public class SubmeterArtigoCommand implements Command {
     public void executar() {
         artigoSubmetido = submissaoArtigo.submeter(
                 autor, nomeArtigo, resumo, coautores, areas, quantidadePaginas);
-        System.out.println("[OK] Artigo submetido: " + nomeArtigo + " (ID: " + artigoSubmetido.getId() + ")");
+        SaidaAplicacao.get().linha("[OK] Artigo submetido: " + nomeArtigo + " (ID: " + artigoSubmetido.getId() + ")");
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
         if (artigoSubmetido != null) {
-            System.out.println("[DESFAZER] Submissao do artigo: " + nomeArtigo);
+            SaidaAplicacao.get().linha("[DESFAZER] Submissao do artigo: " + nomeArtigo);
         }
     }
 

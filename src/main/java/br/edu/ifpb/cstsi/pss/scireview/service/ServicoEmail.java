@@ -8,6 +8,7 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.estado.StatusArtigo;
 import br.edu.ifpb.cstsi.pss.scireview.observer.Observer;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaConsole;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -21,32 +22,42 @@ public class ServicoEmail implements Observer {
     private final GerenciadorEvento gerenciadorEvento;
     private final CadastroUsuario cadastroUsuario;
     private final SistemaAvaliacao sistemaAvaliacao;
+    private final SaidaConsole saida;
     private boolean enviarEmailReal;
 
     public ServicoEmail(GerenciadorEvento gerenciadorEvento,
                         CadastroUsuario cadastroUsuario,
                         SistemaAvaliacao sistemaAvaliacao) {
+        this(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao, new SaidaConsole());
+    }
+
+    public ServicoEmail(GerenciadorEvento gerenciadorEvento,
+                        CadastroUsuario cadastroUsuario,
+                        SistemaAvaliacao sistemaAvaliacao,
+                        SaidaConsole saida) {
         this.gerenciadorEvento = gerenciadorEvento;
         this.cadastroUsuario = cadastroUsuario;
         this.sistemaAvaliacao = sistemaAvaliacao;
+        this.saida = saida;
         this.enviarEmailReal = false;
     }
 
     public void ativarEmailReal() {
         this.enviarEmailReal = true;
-        System.out.println("[EMAIL] Modo REAL ativado.");
+        saida.linha("[EMAIL] Modo REAL ativado.");
     }
 
     public void desativarEmailReal() {
         this.enviarEmailReal = false;
-        System.out.println("[EMAIL] Modo SIMULACAO ativado.");
+        saida.linha("[EMAIL] Modo SIMULACAO ativado.");
     }
 
     @Override
     public void atualizar(String evento, Object dados) {
         if ("CICLO_REVISOES_FINALIZADO".equals(evento)) {
             Evento eventoAtual = (Evento) dados;
-            System.out.println("\n[EMAIL] Notificando autores sobre o resultado das avaliacoes");
+            saida.linha();
+            saida.linha("[EMAIL] Notificando autores sobre o resultado das avaliacoes");
             notificarTodosAutores(eventoAtual);
         }
     }
@@ -64,11 +75,7 @@ public class ServicoEmail implements Observer {
                 """.formatted(artigo.getTitulo(), artigo.getId(), prazoRevisao);
 
         Notificacao notificacao = new Notificacao(revisor.getEmail(), titulo, conteudo);
-        if (enviarEmailReal) {
-            enviarEmailReal(notificacao);
-        } else {
-            simularEnvioEmail(notificacao);
-        }
+        enviar(notificacao);
     }
 
     public void notificarTodosAutores(Evento evento) {
@@ -84,14 +91,20 @@ public class ServicoEmail implements Observer {
 
                     GeradorEmail gerador = criarGeradorApropriado(artigo);
                     Notificacao notificacao = gerador.gerarEmail(artigo, evento, revisoes, autor, coordenador);
-
-                    if (enviarEmailReal) {
-                        enviarEmailReal(notificacao);
-                    } else {
-                        simularEnvioEmail(notificacao);
-                    }
+                    enviar(notificacao);
                 }
             }
+        }
+    }
+
+    private void enviar(Notificacao notificacao) {
+        if (enviarEmailReal) {
+            enviarEmailReal(notificacao);
+        } else {
+            saida.simularEmail(
+                    notificacao.getDestinatario(),
+                    notificacao.getTitulo(),
+                    notificacao.getConteudo());
         }
     }
 
@@ -109,22 +122,11 @@ public class ServicoEmail implements Observer {
                 .orElse("Coordenador do Evento");
     }
 
-    private void simularEnvioEmail(Notificacao notificacao) {
-        System.out.println("\n[EMAIL] ================================================");
-        System.out.println("[EMAIL] SIMULACAO DE ENVIO (NENHUM EMAIL FOI ENVIADO)");
-        System.out.println("[EMAIL] Para: " + notificacao.getDestinatario());
-        System.out.println("[EMAIL] Assunto: " + notificacao.getTitulo());
-        System.out.println("[EMAIL] Conteudo:");
-        System.out.println(notificacao.getConteudo());
-        System.out.println("[EMAIL] ================================================\n");
-    }
-
     private void enviarEmailReal(Notificacao notificacao) {
         try {
             String host = EmailConfig.getHost();
             int port = EmailConfig.getPort();
 
-            // Usa variavel de ambiente se disponivel, senao fallback para EmailConfig
             String username = System.getenv("EMAIL_USERNAME");
             String password = System.getenv("EMAIL_PASSWORD");
 
@@ -135,16 +137,11 @@ public class ServicoEmail implements Observer {
                 password = EmailConfig.getPassword();
             }
 
-            // Verifica se as credenciais foram configuradas
             if (username == null || username.isEmpty() || "seuemail@gmail.com".equals(username)) {
-                System.out.println("\n[EMAIL] ERRO: Credenciais nao configuradas.");
-                System.out.println("[EMAIL] Configure as variaveis de ambiente EMAIL_USERNAME e EMAIL_PASSWORD");
-                System.out.println("[EMAIL] Ou edite o arquivo EmailConfig.java com suas credenciais.");
-                System.out.println("[EMAIL] NENHUM EMAIL FOI ENVIADO.\n");
+                saida.emailErroCredenciais();
                 return;
             }
 
-            // Declarar como final para usar no Authenticator
             final String finalUsername = username;
             final String finalPassword = password;
 
@@ -171,19 +168,10 @@ public class ServicoEmail implements Observer {
 
             Transport.send(message);
 
-            System.out.println("\n[EMAIL] ================================================");
-            System.out.println("[EMAIL] EMAIL REAL ENVIADO COM SUCESSO!");
-            System.out.println("[EMAIL] Para: " + notificacao.getDestinatario());
-            System.out.println("[EMAIL] Assunto: " + notificacao.getTitulo());
-            System.out.println("[EMAIL] ================================================\n");
+            saida.emailEnviado(notificacao.getDestinatario(), notificacao.getTitulo());
 
         } catch (MessagingException e) {
-            System.err.println("\n[EMAIL] ================================================");
-            System.err.println("[EMAIL] ERRO AO ENVIAR EMAIL: " + e.getMessage());
-            System.err.println("[EMAIL] NENHUM EMAIL FOI ENVIADO.");
-            System.err.println("[EMAIL] Verifique suas credenciais no EmailConfig.java");
-            System.err.println("[EMAIL] ou configure as variaveis de ambiente.");
-            System.err.println("[EMAIL] ================================================\n");
+            saida.emailErroEnvio(e.getMessage());
         }
     }
 }

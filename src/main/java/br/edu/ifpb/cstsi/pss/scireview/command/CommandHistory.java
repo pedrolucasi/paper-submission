@@ -1,5 +1,7 @@
 package br.edu.ifpb.cstsi.pss.scireview.command;
 
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,38 +27,40 @@ public class CommandHistory {
 
     public void desfazerUltimo() {
         if (historico.isEmpty()) {
-            System.out.println("[AVISO] Nenhum comando para desfazer.");
+            SaidaAplicacao.get().linha("[AVISO] Nenhum comando para desfazer.");
             return;
         }
         Command ultimo = historico.remove(historico.size() - 1);
         if (ultimo.isReversivel()) {
             ultimo.desfazer();
             desfeitos.add(ultimo);
-            System.out.println("[DESFAZER] " + ultimo.getDescricao());
+            SaidaAplicacao.get().linha("[DESFAZER] " + ultimo.getDescricao());
         } else {
-            System.out.println("[ERRO] Comando nao e reversivel: " + ultimo.getDescricao());
+            SaidaAplicacao.get().linha("[ERRO] Comando nao e reversivel: " + ultimo.getDescricao());
             historico.add(ultimo);
         }
     }
 
     public void refazerUltimoDesfeito() {
         if (desfeitos.isEmpty()) {
-            System.out.println("[AVISO] Nenhum comando para refazer.");
+            SaidaAplicacao.get().linha("[AVISO] Nenhum comando para refazer.");
             return;
         }
         Command ultimo = desfeitos.remove(desfeitos.size() - 1);
         ultimo.executar();
         historico.add(ultimo);
-        System.out.println("[REFAZER] " + ultimo.getDescricao());
+        SaidaAplicacao.get().linha("[REFAZER] " + ultimo.getDescricao());
     }
 
     public void exibirHistorico() {
-        System.out.println("\n+--------------------------------------------------------+");
-        System.out.println("|              HISTORICO DE AUDITORIA                    |");
-        System.out.println("+--------------------------------------------------------+");
+        var saida = SaidaAplicacao.get();
+        saida.linha();
+        saida.linha("+--------------------------------------------------------+");
+        saida.linha("|              HISTORICO DE AUDITORIA                    |");
+        saida.linha("+--------------------------------------------------------+");
 
         if (historico.isEmpty()) {
-            System.out.println("|   Nenhuma acao registrada.                            |");
+            saida.linha("|   Nenhuma acao registrada.                            |");
         } else {
             int i = 1;
             for (Command cmd : historico) {
@@ -65,13 +69,13 @@ public class CommandHistory {
                 String descricao = cmd.getDescricao();
                 String reversivel = cmd.isReversivel() ? "[X]" : "[ ]";
 
-                System.out.printf("| %2d. %s %s%n", i, reversivel, descricao);
-                System.out.printf("|     Usuario: %s | Hora: %s%n", executor, data);
+                saida.formatado("| %2d. %s %s%n", i, reversivel, descricao);
+                saida.formatado("|     Usuario: %s | Hora: %s%n", executor, data);
                 i++;
             }
         }
-        System.out.println("+--------------------------------------------------------+");
-        System.out.println("   Total de comandos: " + historico.size());
+        saida.linha("+--------------------------------------------------------+");
+        saida.linha("   Total de comandos: " + historico.size());
     }
 
     public List<Command> getHistorico() {
@@ -79,8 +83,12 @@ public class CommandHistory {
     }
 
     public void limparHistorico() {
+        limpar();
+        SaidaAplicacao.get().linha("[SISTEMA] Historico limpo.");
+    }
+
+    public void limpar() {
         historico.clear();
         desfeitos.clear();
-        System.out.println("[SISTEMA] Historico limpo.");
     }
 }
