@@ -9,6 +9,12 @@ import br.edu.ifpb.cstsi.pss.scireview.command.IniciarEventoCommand;
 import br.edu.ifpb.cstsi.pss.scireview.command.RegistrarRevisorCommand;
 import br.edu.ifpb.cstsi.pss.scireview.command.SubmeterArtigoCommand;
 import br.edu.ifpb.cstsi.pss.scireview.dashboard.Dashboard;
+import br.edu.ifpb.cstsi.pss.scireview.loader.AssociacaoRevisorArea;
+import br.edu.ifpb.cstsi.pss.scireview.loader.CsvDataLoader;
+import br.edu.ifpb.cstsi.pss.scireview.loader.DadosArtigo;
+import br.edu.ifpb.cstsi.pss.scireview.loader.DadosCarregados;
+import br.edu.ifpb.cstsi.pss.scireview.loader.DadosEvento;
+import br.edu.ifpb.cstsi.pss.scireview.loader.DadosUsuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
@@ -27,8 +33,9 @@ import br.edu.ifpb.cstsi.pss.scireview.service.SubmissaoArtigo;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class Main {
 
@@ -52,31 +59,41 @@ public class Main {
         DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(sistemaAvaliacao, cadastroAreaTematica);
         RevisaoArtigo revisaoArtigo = new RevisaoArtigo(sistemaAvaliacao);
 
-        // RF02 - Cadastro de usuarios
-        Usuario coordenador = cadastroUsuario.cadastrar(
-                "coordenador@evento.com", "senha123", "IFPB", Set.of(Papel.COORDENADOR));
-        Usuario autor1 = cadastroUsuario.cadastrar(
-                "autor1@email.com", "senha123", "UFPB", Set.of(Papel.AUTOR));
-        Usuario autor2 = cadastroUsuario.cadastrar(
-                "autor2@email.com", "senha123", "UFCG", Set.of(Papel.AUTOR));
+        // E1 - Carga de dados via CSV
+        CsvDataLoader csvDataLoader = new CsvDataLoader();
+        DadosCarregados dados = csvDataLoader.carregar();
+        System.out.println("[CSV] Dados carregados de src/main/resources/dados/\n");
 
+        Usuario coordenador = null;
         List<Usuario> revisores = new ArrayList<>();
-        revisores.add(cadastroUsuario.cadastrar(
-                "revisor1@email.com", "senha123", "USP", Set.of(Papel.REVISOR)));
-        revisores.add(cadastroUsuario.cadastrar(
-                "revisor2@email.com", "senha123", "UNICAMP", Set.of(Papel.REVISOR)));
-        revisores.add(cadastroUsuario.cadastrar(
-                "revisor3@email.com", "senha123", "UFRJ", Set.of(Papel.REVISOR)));
+        for (DadosUsuario dadosUsuario : dados.usuarios()) {
+            Usuario usuario = cadastroUsuario.cadastrar(
+                    dadosUsuario.email(),
+                    dadosUsuario.senha(),
+                    dadosUsuario.instituicao(),
+                    dadosUsuario.papeis());
+            if (usuario.possuiPapel(Papel.COORDENADOR)) {
+                coordenador = usuario;
+            }
+            if (usuario.possuiPapel(Papel.REVISOR)) {
+                revisores.add(usuario);
+            }
+        }
+
+        if (coordenador == null) {
+            throw new IllegalStateException("Nenhum coordenador encontrado no arquivo usuarios.csv.");
+        }
 
         // RF01 - Command: Iniciar Evento
         LocalDate hoje = LocalDate.now();
+        DadosEvento dadosEvento = dados.evento();
         IniciarEventoCommand iniciarEvento = new IniciarEventoCommand(
                 gerenciadorEvento, coordenador,
-                "Simposio Brasileiro de Sistemas de Informacao - 2026",
-                "Vitoria - ES",
-                "25 de maio a 28 de maio de 2026",
-                hoje.minusDays(30),
-                hoje.plusDays(30)
+                dadosEvento.nome(),
+                dadosEvento.cidade(),
+                dadosEvento.periodo(),
+                hoje.minusDays(dadosEvento.diasInicioAntesHoje()),
+                hoje.plusDays(dadosEvento.diasFimDepoisHoje())
         );
         iniciarEvento.executar();
 
@@ -86,34 +103,19 @@ public class Main {
         definirCategoria.executar();
 
         // RF03 - Command: Cadastrar Areas
-        CadastrarAreaCommand areaIA = new CadastrarAreaCommand(
-                cadastroAreaTematica, coordenador, "Inteligencia Artificial");
-        areaIA.executar();
-
-        CadastrarAreaCommand areaML = new CadastrarAreaCommand(
-                cadastroAreaTematica, coordenador, "Machine Learning");
-        areaML.executar();
-
-        CadastrarAreaCommand areaVisao = new CadastrarAreaCommand(
-                cadastroAreaTematica, coordenador, "Visao Computacional");
-        areaVisao.executar();
-
-        CadastrarAreaCommand areaDados = new CadastrarAreaCommand(
-                cadastroAreaTematica, coordenador, "Ciencia de Dados");
-        areaDados.executar();
-
-        CadastrarAreaCommand areaSaude = new CadastrarAreaCommand(
-                cadastroAreaTematica, coordenador, "Informatica na Saude");
-        areaSaude.executar();
+        for (String area : dados.areas()) {
+            CadastrarAreaCommand cadastrarArea = new CadastrarAreaCommand(
+                    cadastroAreaTematica, coordenador, area);
+            cadastrarArea.executar();
+        }
 
         // Associar areas aos revisores
-        cadastroAreaTematica.associarRevisor(revisores.get(0), "Inteligencia Artificial");
-        cadastroAreaTematica.associarRevisor(revisores.get(0), "Machine Learning");
-        cadastroAreaTematica.associarRevisor(revisores.get(0), "Ciencia de Dados");
-        cadastroAreaTematica.associarRevisor(revisores.get(1), "Visao Computacional");
-        cadastroAreaTematica.associarRevisor(revisores.get(1), "Inteligencia Artificial");
-        cadastroAreaTematica.associarRevisor(revisores.get(2), "Ciencia de Dados");
-        cadastroAreaTematica.associarRevisor(revisores.get(2), "Informatica na Saude");
+        for (AssociacaoRevisorArea associacao : dados.associacoesRevisores()) {
+            Usuario revisor = cadastroUsuario.buscarPorEmail(associacao.emailRevisor())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Revisor nao encontrado no CSV: " + associacao.emailRevisor()));
+            cadastroAreaTematica.associarRevisor(revisor, associacao.area());
+        }
 
         // RF04 - Command: Registrar Revisores
         for (Usuario revisor : revisores) {
@@ -124,50 +126,23 @@ public class Main {
 
         // RF05 - Command: Submeter Artigos
         List<Artigo> artigos = new ArrayList<>();
+        Map<String, Boolean> recomendacaoPorTitulo = new HashMap<>();
+        for (DadosArtigo dadosArtigo : dados.artigos()) {
+            Usuario autor = cadastroUsuario.buscarPorEmail(dadosArtigo.emailAutor())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Autor nao encontrado no CSV: " + dadosArtigo.emailAutor()));
 
-        SubmeterArtigoCommand submeter1 = new SubmeterArtigoCommand(
-                submissaoArtigo, autor1,
-                "IA Aplicada a Saude com Machine Learning",
-                "Este artigo explora aplicacoes de Inteligencia Artificial e Machine Learning na area da saude, "
-                        + "apresentando metodologia, experimentos e resultados obtidos ao longo da pesquisa.",
-                List.of("coautor1@email.com"),
-                10
-        );
-        submeter1.executar();
-        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(0));
-
-        SubmeterArtigoCommand submeter2 = new SubmeterArtigoCommand(
-                submissaoArtigo, autor1,
-                "Visao Computacional para Diagnostico por Imagem",
-                "Utilizacao de tecnicas de Visao Computacional para auxiliar no diagnostico medico por imagem, "
-                        + "detalhando o pipeline proposto e a avaliacao experimental conduzida.",
-                List.of("coautor2@email.com"),
-                8
-        );
-        submeter2.executar();
-        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor1).get(1));
-
-        SubmeterArtigoCommand submeter3 = new SubmeterArtigoCommand(
-                submissaoArtigo, autor2,
-                "Analise de Dados em Sistemas de Saude",
-                "Aplicacao de Ciencia de Dados para analise de prontuarios eletronicos em sistemas de saude, "
-                        + "com discussao sobre coleta, tratamento e interpretacao dos dados clinicos.",
-                List.of("coautor3@email.com"),
-                12
-        );
-        submeter3.executar();
-        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(0));
-
-        SubmeterArtigoCommand submeter4 = new SubmeterArtigoCommand(
-                submissaoArtigo, autor2,
-                "Deep Learning para Processamento de Linguagem Natural",
-                "Uso de Deep Learning para processamento de linguagem natural em textos medicos, "
-                        + "abordando arquitetura, treinamento do modelo e as metricas de desempenho alcancadas.",
-                List.of("coautor4@email.com"),
-                9
-        );
-        submeter4.executar();
-        artigos.add(submissaoArtigo.listarArtigosDoAutor(autor2).get(1));
+            SubmeterArtigoCommand submeter = new SubmeterArtigoCommand(
+                    submissaoArtigo, autor,
+                    dadosArtigo.titulo(),
+                    dadosArtigo.resumo(),
+                    dadosArtigo.coautores(),
+                    dadosArtigo.paginas()
+            );
+            submeter.executar();
+            artigos.add(submeter.getArtigoSubmetido());
+            recomendacaoPorTitulo.put(dadosArtigo.titulo(), dadosArtigo.recomendado());
+        }
 
         // Colocar artigos em revisao
         for (Artigo artigo : artigos) {
@@ -182,8 +157,8 @@ public class Main {
 
         // RF07 - Conclusao de revisao: cada revisor emite seu parecer via o servico
         for (Revisao revisao : sistemaAvaliacao.getTodasRevisoes()) {
-            boolean recomendado = revisao.getArtigo().getTitulo().contains("Saude")
-                    || revisao.getArtigo().getTitulo().contains("Diagnostico");
+            boolean recomendado = recomendacaoPorTitulo.getOrDefault(
+                    revisao.getArtigo().getTitulo(), false);
             revisaoArtigo.emitirParecer(
                     revisao.getRevisor(),
                     revisao.getArtigo().getId(),
@@ -211,7 +186,6 @@ public class Main {
         }
 
         // RF09 - Envio de email real (ATIVADO POR PADRAO)
-        
         servicoEmail.ativarEmailReal();
 
         // RF09 - Command: Finalizar Ciclo (dispara os emails)

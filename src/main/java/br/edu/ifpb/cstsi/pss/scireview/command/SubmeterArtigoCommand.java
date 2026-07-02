@@ -62,4 +62,8 @@ public class SubmeterArtigoCommand implements Command {
     public boolean isReversivel() {
         return true;
     }
+
+    public Artigo getArtigoSubmetido() {
+        return artigoSubmetido;
+    }
 }
