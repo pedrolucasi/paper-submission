@@ -10,7 +10,6 @@ import br.edu.ifpb.cstsi.pss.scireview.command.RegistrarRevisorCommand;
 import br.edu.ifpb.cstsi.pss.scireview.command.SubmeterArtigoCommand;
 import br.edu.ifpb.cstsi.pss.scireview.dashboard.Dashboard;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
-import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
@@ -204,12 +203,18 @@ public class Main {
             long concluidas = revisoesDoArtigo.stream().filter(Revisao::isConcluida).count();
             if (positivas * 2 >= concluidas) {
                 artigo.aceitar();
+                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' foi ACEITO.");
             } else {
                 artigo.rejeitar();
+                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' foi REJEITADO.");
             }
         }
 
-        // RF09 - Command: Finalizar Ciclo
+        // RF09 - Envio de email real (descomentar para ativar)
+        // servicoEmail.ativarEmailReal();
+        servicoEmail.desativarEmailReal(); // Mantem simulacao
+
+        // RF09 - Command: Finalizar Ciclo (dispara os emails)
         FinalizarCicloCommand finalizar = new FinalizarCicloCommand(gerenciadorEvento, coordenador);
         finalizar.executar();
 

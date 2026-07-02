@@ -3,8 +3,8 @@ package br.edu.ifpb.cstsi.pss.scireview.config;
 public class EmailConfig {
     private static final String HOST = "smtp.gmail.com";
     private static final int PORT = 587;
-    private static final String USERNAME = "pedro@gmail.com";
-    private static final String PASSWORD = "123456";
+    private static final String USERNAME = "seuemail@gmail.com";  // SUBSTITUIR
+    private static final String PASSWORD = "suasenha";             // SUBSTITUIR
 
     public static String getHost() { return HOST; }
     public static int getPort() { return PORT; }
