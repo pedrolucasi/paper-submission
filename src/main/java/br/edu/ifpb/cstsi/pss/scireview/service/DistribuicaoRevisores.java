@@ -75,17 +75,17 @@ public class DistribuicaoRevisores {
         Set<AreaTematica> areasDoArtigo = resolverAreasArtigo.resolver(artigo);
         List<Usuario> selecionados = new ArrayList<>();
 
-        Comparator<Usuario> porAfinidadeECarga = Comparator
-                .comparingInt((Usuario revisor) -> calcularAfinidade(revisor, areasDoArtigo))
-                .reversed()
-                .thenComparingInt(revisor -> cargaPorRevisor.getOrDefault(revisor, 0))
+        Comparator<Usuario> porCargaEAfinidade = Comparator
+                .comparingInt((Usuario revisor) -> cargaPorRevisor.getOrDefault(revisor, 0))
+                .thenComparing(Comparator.comparingInt(
+                        (Usuario revisor) -> calcularAfinidade(revisor, areasDoArtigo)).reversed())
                 .thenComparing(Usuario::getEmail);
 
         for (int i = 0; i < REVISORES_POR_ARTIGO; i++) {
             Usuario escolhido = revisores.stream()
-                    .filter(revisor -> !autoresDoArtigo.contains(revisor.getEmail()))
+                    .filter(revisor -> !autoresDoArtigo.contains(normalizarEmail(revisor.getEmail())))
                     .filter(revisor -> !selecionados.contains(revisor))
-                    .sorted(porAfinidadeECarga)
+                    .sorted(porCargaEAfinidade)
                     .findFirst()
                     .orElse(null);
 
@@ -110,9 +110,24 @@ public class DistribuicaoRevisores {
 
     private Set<String> obterAutoresDoArtigo(Artigo artigo) {
         Set<String> autores = new HashSet<>();
-        autores.add(artigo.getAutor().getEmail());
-        autores.addAll(artigo.getCoautores());
+        autores.add(normalizarEmail(artigo.getAutor().getEmail()));
+        artigo.getCoautores().forEach(coautor -> autores.add(normalizarEmail(coautor)));
         return autores;
+    }
+
+    private String normalizarEmail(String email) {
+        return email.trim().toLowerCase();
+    }
+
+    public Map<Usuario, Integer> obterCargaPorRevisor(List<Usuario> revisores) {
+        Map<Usuario, Integer> carga = new LinkedHashMap<>();
+        for (Usuario revisor : revisores) {
+            int total = (int) sistemaAvaliacao.getTodasRevisoes().stream()
+                    .filter(revisao -> revisao.getRevisor().equals(revisor))
+                    .count();
+            carga.put(revisor, total);
+        }
+        return carga;
     }
 
     private int calcularAfinidade(Usuario revisor, Set<AreaTematica> areasDoArtigo) {

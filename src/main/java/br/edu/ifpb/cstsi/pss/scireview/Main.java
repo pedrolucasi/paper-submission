@@ -160,6 +160,10 @@ public class Main {
                 distribuicao, artigos, revisores, coordenador);
         distribuir.executar();
 
+        System.out.println("\n[RF06] Carga por revisor apos distribuicao:");
+        distribuicao.obterCargaPorRevisor(revisores).forEach((revisor, carga) ->
+                System.out.println("   - " + revisor.getEmail() + ": " + carga + " artigo(s)"));
+
         // RF06 - Blind review: revisor ve apenas titulo, resumo e areas (sem autores)
         if (!revisores.isEmpty()) {
             System.out.println("\n[RF06] Artigos pendentes (visao cega) - " + revisores.get(0).getEmail());
