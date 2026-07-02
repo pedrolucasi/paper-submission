@@ -18,7 +18,7 @@ public abstract class GeradorEmail {
         String assinatura = gerarAssinatura(evento, coordenador);
 
         String conteudoCompleto = cabecalho + "\n\n" + corpoMensagem + "\n\n" + pareceres + "\n\n" + assinatura;
-        String titulo = "SciReview - Resultado da Submissão: " + artigo.getTitulo();
+        String titulo = "SciReview - Resultado da Submissao: " + artigo.getTitulo();
 
         return new Notificacao(autor.getEmail(), titulo, conteudoCompleto);
     }
@@ -36,12 +36,12 @@ public abstract class GeradorEmail {
 
             if (avaliacao != null) {
                 sb.append("[Revisor ").append(i + 1).append("]\n");
-                sb.append("Principal Contribuição ou pontos positivos\n");
+                sb.append("Principal Contribuicao ou pontos positivos\n");
                 sb.append("================================\n");
                 sb.append(avaliacao.getContribuicoes()).append("\n\n");
                 sb.append("Pontos negativos\n");
                 sb.append("================================\n");
-                sb.append(avaliacao.getCriticas()).append("\n\n");
+                sb.append(avaliacao.getPontosCritica()).append("\n\n");
                 sb.append("Veredito: ").append(avaliacao.getVeredito()).append("\n\n");
             }
         }
@@ -52,7 +52,7 @@ public abstract class GeradorEmail {
     private String gerarAssinatura(Evento evento, String coordenador) {
         return "Atenciosamente,\n" +
                coordenador + "\n" +
-               "Coordenadora do Comitê de Programa do " + evento.getNome();
+               "Coordenadora do Comite de Programa do " + evento.getNome();
     }
 
     protected String getSaudacao(Usuario autor) {
