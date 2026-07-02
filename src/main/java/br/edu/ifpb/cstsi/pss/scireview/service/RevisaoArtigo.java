@@ -6,6 +6,7 @@ import br.edu.ifpb.cstsi.pss.scireview.exception.ParecerJaEmitidoException;
 import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.ArtigoParaRevisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Avaliacao;
+import br.edu.ifpb.cstsi.pss.scireview.model.HistoricoRevisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
@@ -49,6 +50,13 @@ public class RevisaoArtigo {
         return sistemaAvaliacao.listarRevisoesPendentesDoRevisor(revisor).stream()
                 .map(Revisao::getArtigo)
                 .map(this::paraVisaoCega)
+                .toList();
+    }
+
+    public List<HistoricoRevisao> listarHistoricoRevisoes(Usuario revisor) {
+        validarRevisor(revisor);
+        return sistemaAvaliacao.listarRevisoesConcluidasDoRevisor(revisor).stream()
+                .map(this::paraHistorico)
                 .toList();
     }
 
@@ -99,10 +107,20 @@ public class RevisaoArtigo {
         );
     }
 
+    private HistoricoRevisao paraHistorico(Revisao revisao) {
+        Avaliacao avaliacao = revisao.getAvaliacao();
+        return new HistoricoRevisao(
+                paraVisaoCega(revisao.getArtigo()),
+                avaliacao.getContribuicoes(),
+                avaliacao.getPontosCritica(),
+                avaliacao.getVeredito()
+        );
+    }
+
     private void validarRevisor(Usuario revisor) {
         if (revisor == null || !revisor.possuiPapel(Papel.REVISOR)) {
             throw new AcessoNaoAutorizadoException(
-                    "Apenas usuários com o papel de revisor podem consultar pendências ou emitir parecer.");
+                    "Apenas usuários com o papel de revisor podem consultar pendências, histórico ou emitir parecer.");
         }
     }
 }

@@ -66,6 +66,13 @@ public class SistemaAvaliacao {
                 .toList();
     }
 
+    public List<Revisao> listarRevisoesConcluidasDoRevisor(Usuario revisor) {
+        return revisoes.stream()
+                .filter(revisao -> revisao.getRevisor().equals(revisor))
+                .filter(Revisao::isConcluida)
+                .toList();
+    }
+
     public void adicionarRevisao(Revisao revisao) {
         revisoes.add(revisao);
     }
