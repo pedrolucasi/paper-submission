@@ -1,0 +1,79 @@
+@startuml padrao-state
+' Padrão State — RF05
+' Contexto: Artigo | Estados: model.estado.*
+
+title Padrão State — ciclo de vida do Artigo (RF05)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class Artigo <<Context>> {
+  - estado : EstadoArtigo
+  + alterarEstado(novo)
+  + enviarParaRevisao()
+  + concluirRevisao()
+  + aceitar()
+  + rejeitar()
+  + getStatus()
+}
+
+interface EstadoArtigo <<State>> {
+  + getStatus()
+  + enviarParaRevisao(artigo)
+  + concluirRevisao(artigo)
+  + aceitar(artigo)
+  + rejeitar(artigo)
+}
+
+abstract class EstadoArtigoBase {
+  # status : StatusArtigo
+  ' transições inválidas lançam exceção
+}
+
+class Submetido
+class EmRevisao
+class Revisado
+class Aceito
+class Rejeitado
+
+enum StatusArtigo {
+  SUBMETIDO
+  EM_REVISAO
+  REVISADO
+  ACEITO
+  REJEITADO
+}
+
+Artigo "1" o-- "1" EstadoArtigo : delega
+EstadoArtigo <|.. EstadoArtigoBase
+EstadoArtigoBase <|-- Submetido
+EstadoArtigoBase <|-- EmRevisao
+EstadoArtigoBase <|-- Revisado
+EstadoArtigoBase <|-- Aceito
+EstadoArtigoBase <|-- Rejeitado
+EstadoArtigo ..> Artigo : altera estado
+EstadoArtigoBase --> StatusArtigo
+
+note right of Submetido
+  **enviarParaRevisao()**
+  → new EmRevisao()
+end note
+
+note right of EmRevisao
+  **concluirRevisao()** → Revisado
+  **aceitar()** → Aceito
+  **rejeitar()** → Rejeitado
+end note
+
+note right of Revisado
+  **aceitar()** → Aceito
+  **rejeitar()** → Rejeitado
+end note
+
+note bottom of Artigo
+  O **Artigo** não conhece regras de transição —
+  apenas repassa a chamada ao estado atual.
+  Ver também: ../estado-artigo.puml
+end note
+
+@enduml

@@ -1,0 +1,58 @@
+@startuml padrao-template-method
+' Padrão Template Method — RF09
+' Esqueleto do e-mail em GeradorEmail; variações em subclasses
+
+title Padrão Template Method — geração de e-mails (RF09)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+abstract class GeradorEmail {
+  + {final} gerarEmail(artigo, evento, revisoes, autor, coord)
+  # {abstract} gerarCabecalho(artigo, autor)
+  # {abstract} gerarCorpo(artigo, evento)
+  - gerarPareceres(revisoes)
+  - gerarAssinatura(evento, coord)
+  # getSaudacao(autor)
+}
+
+class EmailAceite {
+  # gerarCabecalho(...)
+  # gerarCorpo(...)
+}
+
+class EmailRejeicao {
+  # gerarCabecalho(...)
+  # gerarCorpo(...)
+}
+
+class ServicoEmail {
+  - criarGeradorApropriado(artigo)
+  + notificarTodosAutores(evento)
+}
+
+class Notificacao {
+  + destinatario
+  + titulo
+  + conteudo
+}
+
+GeradorEmail <|-- EmailAceite
+GeradorEmail <|-- EmailRejeicao
+ServicoEmail ..> GeradorEmail : instancia
+GeradorEmail ..> Notificacao : produz
+
+note right of GeradorEmail
+  **gerarEmail()** (final) define o algoritmo:
+  1. cabeçalho  ← hook
+  2. corpo      ← hook
+  3. pareceres  (comum)
+  4. assinatura (comum)
+end note
+
+note bottom of ServicoEmail
+  Escolhe EmailAceite ou EmailRejeicao
+  conforme StatusArtigo do artigo.
+end note
+
+@enduml

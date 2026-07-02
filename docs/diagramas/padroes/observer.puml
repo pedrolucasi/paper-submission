@@ -1,0 +1,52 @@
+@startuml padrao-observer
+' Padrão Observer — RF09
+' Subject: GerenciadorEvento | Observer: ServicoEmail
+
+title Padrão Observer — notificações por e-mail (RF09)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class GerenciadorEvento <<Subject>> {
+  - observadores : List<Observer>
+  + adicionarObserver(obs)
+  + removerObserver(obs)
+  - notificarObservadores(evento, dados)
+  + startNovoEvento(...)
+  + finalizarCicloRevisoes()
+}
+
+interface Observer {
+  + atualizar(evento, dados)
+}
+
+class ServicoEmail <<ConcreteObserver>> {
+  + atualizar(evento, dados)
+  + notificarRevisorAtribuicao(...)
+  + notificarTodosAutores(evento)
+}
+
+class SistemaAvaliacao
+class CadastroUsuario
+class SaidaConsole
+
+GerenciadorEvento o-- "0..*" Observer
+Observer <|.. ServicoEmail
+
+ServicoEmail --> SistemaAvaliacao
+ServicoEmail --> CadastroUsuario
+ServicoEmail --> SaidaConsole
+
+note right of GerenciadorEvento
+  Eventos notificados:
+  • **EVENTO_INICIADO**
+  • **CICLO_REVISOES_FINALIZADO**
+end note
+
+note right of ServicoEmail
+  Reage a **CICLO_REVISOES_FINALIZADO**:
+  envia e-mail de aceite/rejeição
+  a todos os autores.
+end note
+
+@enduml
