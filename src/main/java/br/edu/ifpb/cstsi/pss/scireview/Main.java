@@ -47,10 +47,11 @@ public class Main {
 
         GerenciadorEvento gerenciadorEvento = new GerenciadorEvento();
         CadastroUsuario cadastroUsuario = new CadastroUsuario();
-        SistemaAvaliacao sistemaAvaliacao = new SistemaAvaliacao();
-        SubmissaoArtigo submissaoArtigo = new SubmissaoArtigo(gerenciadorEvento);
-        ComiteTecnico comiteTecnico = new ComiteTecnico();
         CadastroAreaTematica cadastroAreaTematica = new CadastroAreaTematica();
+        SistemaAvaliacao sistemaAvaliacao = new SistemaAvaliacao();
+        SubmissaoArtigo submissaoArtigo = new SubmissaoArtigo(
+                gerenciadorEvento, cadastroAreaTematica, cadastroUsuario);
+        ComiteTecnico comiteTecnico = new ComiteTecnico();
 
         ServicoEmail servicoEmail = new ServicoEmail(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao);
         gerenciadorEvento.adicionarObserver(servicoEmail);
@@ -139,6 +140,7 @@ public class Main {
                     dadosArtigo.titulo(),
                     dadosArtigo.resumo(),
                     dadosArtigo.coautores(),
+                    dadosArtigo.areas(),
                     dadosArtigo.paginas()
             );
             submeter.executar();

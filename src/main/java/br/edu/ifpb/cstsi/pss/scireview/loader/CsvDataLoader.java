@@ -88,15 +88,17 @@ public class CsvDataLoader {
         List<String[]> linhas = lerCsv("artigos.csv");
         List<DadosArtigo> artigos = new ArrayList<>();
         for (String[] campos : linhas) {
-            validarQuantidadeCampos("artigos.csv", campos, 6);
+            validarQuantidadeCampos("artigos.csv", campos, 7);
             List<String> coautores = parseListaSeparadaPorPipe(campos[3]);
-            boolean recomendado = Boolean.parseBoolean(campos[5]);
+            List<String> areas = parseListaSeparadaPorPipe(campos[4]);
+            boolean recomendado = Boolean.parseBoolean(campos[6]);
             artigos.add(new DadosArtigo(
                     campos[0],
                     campos[1],
                     campos[2],
                     coautores,
-                    Integer.parseInt(campos[4]),
+                    areas,
+                    Integer.parseInt(campos[5]),
                     recomendado
             ));
         }

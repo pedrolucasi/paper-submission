@@ -13,25 +13,28 @@ public class SubmeterArtigoCommand implements Command {
     private final String nomeArtigo;
     private final String resumo;
     private final List<String> coautores;
+    private final List<String> areas;
     private final int quantidadePaginas;
     private final LocalDateTime dataExecucao;
     private Artigo artigoSubmetido;
 
     public SubmeterArtigoCommand(SubmissaoArtigo submissaoArtigo, Usuario autor,
                                  String nomeArtigo, String resumo, List<String> coautores,
-                                 int quantidadePaginas) {
+                                 List<String> areas, int quantidadePaginas) {
         this.submissaoArtigo = submissaoArtigo;
         this.autor = autor;
         this.nomeArtigo = nomeArtigo;
         this.resumo = resumo;
         this.coautores = coautores;
+        this.areas = areas;
         this.quantidadePaginas = quantidadePaginas;
         this.dataExecucao = LocalDateTime.now();
     }
 
     @Override
     public void executar() {
-        artigoSubmetido = submissaoArtigo.submeter(autor, nomeArtigo, resumo, coautores, quantidadePaginas);
+        artigoSubmetido = submissaoArtigo.submeter(
+                autor, nomeArtigo, resumo, coautores, areas, quantidadePaginas);
         System.out.println("[OK] Artigo submetido: " + nomeArtigo + " (ID: " + artigoSubmetido.getId() + ")");
         CommandHistory.getInstance().adicionar(this);
     }

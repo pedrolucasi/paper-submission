@@ -2,6 +2,10 @@ email;senha;instituicao;papeis
 coordenador@evento.com;senha123;IFPB;COORDENADOR
 autor1@email.com;senha123;UFPB;AUTOR
 autor2@email.com;senha123;UFCG;AUTOR
+coautor1@email.com;senha123;UFPE;AUTOR
+coautor2@email.com;senha123;UFRN;AUTOR
+coautor3@email.com;senha123;UFS;AUTOR
+coautor4@email.com;senha123;UNILAB;AUTOR
 revisor1@email.com;senha123;USP;REVISOR
 revisor2@email.com;senha123;UNICAMP;REVISOR
 revisor3@email.com;senha123;UFRJ;REVISOR
