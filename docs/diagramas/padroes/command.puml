@@ -30,6 +30,13 @@ class CadastroAreaTematica
 class ComiteTecnico
 class DistribuicaoRevisores
 
+class CommandHistory <<Invoker>> {
+  + {static} getInstance() : CommandHistory
+  + adicionar(command)
+  + desfazerUltimo()
+  + refazerUltimoDesfeito()
+}
+
 class Main {
   + main()
 }
@@ -51,6 +58,10 @@ DistribuirArtigosCommand --> DistribuicaoRevisores
 FinalizarCicloCommand --> GerenciadorEvento
 
 Main ..> Command : executar()
+
+CommandHistory o-- "0..*" Command : histórico
+Command ..> CommandHistory : adicionar(this)
+Main ..> CommandHistory : desfazerUltimo()
 
 note bottom of Command
   Cada comando encapsula parâmetros + receptor.
