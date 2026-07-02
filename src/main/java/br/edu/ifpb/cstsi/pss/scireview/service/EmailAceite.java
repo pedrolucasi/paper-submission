@@ -9,14 +9,14 @@ public class EmailAceite extends GeradorEmail {
     @Override
     protected String gerarCabecalho(Artigo artigo, Usuario autor) {
         return getSaudacao(autor) + "\n\n" +
-               "Parabéns! Sua submissão de nº " + artigo.getId() +
+               "Parabens! Sua submissao de no " + artigo.getId() +
                ", intitulada \"" + artigo.getTitulo() + "\", para o " +
                artigo.getEvento().getNome() + " - " + artigo.getCategoria() + ", foi ACEITA.\n\n" +
-               "As avaliações estão disponíveis abaixo.";
+               "As avaliacoes estao disponiveis abaixo.";
     }
 
     @Override
     protected String gerarCorpo(Artigo artigo, Evento evento) {
-        return "Seu artigo foi aceito para publicação no evento.";
+        return "Seu artigo foi aceito para publicacao no evento " + evento.getNome() + ".";
     }
 }
