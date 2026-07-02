@@ -203,16 +203,16 @@ public class Main {
             long concluidas = revisoesDoArtigo.stream().filter(Revisao::isConcluida).count();
             if (positivas * 2 >= concluidas) {
                 artigo.aceitar();
-                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' foi ACEITO.");
+                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi ACEITO.");
             } else {
                 artigo.rejeitar();
-                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' foi REJEITADO.");
+                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi REJEITADO.");
             }
         }
 
-        // RF09 - Envio de email real (descomentar para ativar)
-        // servicoEmail.ativarEmailReal();
-        servicoEmail.desativarEmailReal(); // Mantem simulacao
+        // RF09 - Envio de email real (ATIVADO POR PADRAO)
+        
+        servicoEmail.ativarEmailReal();
 
         // RF09 - Command: Finalizar Ciclo (dispara os emails)
         FinalizarCicloCommand finalizar = new FinalizarCicloCommand(gerenciadorEvento, coordenador);

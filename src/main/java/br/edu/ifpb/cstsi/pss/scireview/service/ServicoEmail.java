@@ -33,10 +33,12 @@ public class ServicoEmail implements Observer {
 
     public void ativarEmailReal() {
         this.enviarEmailReal = true;
+        System.out.println("[EMAIL] Modo REAL ativado.");
     }
 
     public void desativarEmailReal() {
         this.enviarEmailReal = false;
+        System.out.println("[EMAIL] Modo SIMULACAO ativado.");
     }
 
     @Override
@@ -88,7 +90,7 @@ public class ServicoEmail implements Observer {
 
     private void simularEnvioEmail(Notificacao notificacao) {
         System.out.println("\n[EMAIL] ================================================");
-        System.out.println("[EMAIL] SIMULACAO DE ENVIO");
+        System.out.println("[EMAIL] SIMULACAO DE ENVIO (NENHUM EMAIL FOI ENVIADO)");
         System.out.println("[EMAIL] Para: " + notificacao.getDestinatario());
         System.out.println("[EMAIL] Assunto: " + notificacao.getTitulo());
         System.out.println("[EMAIL] Conteudo:");
@@ -100,8 +102,30 @@ public class ServicoEmail implements Observer {
         try {
             String host = EmailConfig.getHost();
             int port = EmailConfig.getPort();
-            String username = EmailConfig.getUsername();
-            String password = EmailConfig.getPassword();
+
+            // Usa variavel de ambiente se disponivel, senao fallback para EmailConfig
+            String username = System.getenv("EMAIL_USERNAME");
+            String password = System.getenv("EMAIL_PASSWORD");
+
+            if (username == null || username.isEmpty()) {
+                username = EmailConfig.getUsername();
+            }
+            if (password == null || password.isEmpty()) {
+                password = EmailConfig.getPassword();
+            }
+
+            // Verifica se as credenciais foram configuradas
+            if (username == null || username.isEmpty() || "seuemail@gmail.com".equals(username)) {
+                System.out.println("\n[EMAIL] ERRO: Credenciais nao configuradas.");
+                System.out.println("[EMAIL] Configure as variaveis de ambiente EMAIL_USERNAME e EMAIL_PASSWORD");
+                System.out.println("[EMAIL] Ou edite o arquivo EmailConfig.java com suas credenciais.");
+                System.out.println("[EMAIL] NENHUM EMAIL FOI ENVIADO.\n");
+                return;
+            }
+
+            // Declarar como final para usar no Authenticator
+            final String finalUsername = username;
+            final String finalPassword = password;
 
             Properties props = new Properties();
             props.put("mail.smtp.host", host);
@@ -114,12 +138,12 @@ public class ServicoEmail implements Observer {
             Session session = Session.getInstance(props, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password);
+                    return new PasswordAuthentication(finalUsername, finalPassword);
                 }
             });
 
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(username));
+            message.setFrom(new InternetAddress(finalUsername));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(notificacao.getDestinatario()));
             message.setSubject(notificacao.getTitulo());
             message.setText(notificacao.getConteudo());
@@ -133,9 +157,12 @@ public class ServicoEmail implements Observer {
             System.out.println("[EMAIL] ================================================\n");
 
         } catch (MessagingException e) {
+            System.err.println("\n[EMAIL] ================================================");
             System.err.println("[EMAIL] ERRO AO ENVIAR EMAIL: " + e.getMessage());
+            System.err.println("[EMAIL] NENHUM EMAIL FOI ENVIADO.");
             System.err.println("[EMAIL] Verifique suas credenciais no EmailConfig.java");
-            simularEnvioEmail(notificacao);
+            System.err.println("[EMAIL] ou configure as variaveis de ambiente.");
+            System.err.println("[EMAIL] ================================================\n");
         }
     }
 }
