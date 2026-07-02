@@ -24,13 +24,13 @@ public class DistribuicaoRevisores {
     private final ServicoEmail servicoEmail;
 
     public DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao, CadastroAreaTematica cadastroAreaTematica) {
-        this(sistemaAvaliacao, new ResolverAreasArtigo(cadastroAreaTematica), null);
+        this(sistemaAvaliacao, new ResolverAreasArtigo(), null);
     }
 
     public DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao,
                                  CadastroAreaTematica cadastroAreaTematica,
                                  ServicoEmail servicoEmail) {
-        this(sistemaAvaliacao, new ResolverAreasArtigo(cadastroAreaTematica), servicoEmail);
+        this(sistemaAvaliacao, new ResolverAreasArtigo(), servicoEmail);
     }
 
     DistribuicaoRevisores(SistemaAvaliacao sistemaAvaliacao,

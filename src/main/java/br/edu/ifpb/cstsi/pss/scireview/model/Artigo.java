@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class Artigo {
 
@@ -17,15 +18,18 @@ public class Artigo {
     private final String nome;
     private final String resumo;
     private final List<String> coautores;
+    private final Set<AreaTematica> areasTematicas;
     private final Usuario autor;
     private final Evento evento;
     private EstadoArtigo estado;
 
-    public Artigo(String id, String nome, String resumo, List<String> coautores, Usuario autor, Evento evento) {
+    public Artigo(String id, String nome, String resumo, List<String> coautores,
+                  Set<AreaTematica> areasTematicas, Usuario autor, Evento evento) {
         this.id = validarId(id);
         this.nome = validarTextoObrigatorio(nome, "Nome do artigo é obrigatório.");
         this.resumo = validarTextoObrigatorio(resumo, "Resumo do artigo é obrigatório.");
         this.coautores = validarCoautores(coautores);
+        this.areasTematicas = validarAreas(areasTematicas);
         this.autor = Objects.requireNonNull(autor, "Autor do artigo é obrigatório.");
         this.evento = Objects.requireNonNull(evento, "Evento do artigo é obrigatório.");
         this.estado = new Submetido();
@@ -45,6 +49,10 @@ public class Artigo {
 
     public List<String> getCoautores() {
         return Collections.unmodifiableList(coautores);
+    }
+
+    public Set<AreaTematica> getAreasTematicas() {
+        return Collections.unmodifiableSet(areasTematicas);
     }
 
     public Usuario getAutor() {
@@ -137,5 +145,12 @@ public class Artigo {
             coautoresNormalizados.add(coautor.trim());
         }
         return List.copyOf(coautoresNormalizados);
+    }
+
+    private static Set<AreaTematica> validarAreas(Set<AreaTematica> areas) {
+        if (areas == null || areas.isEmpty()) {
+            throw new DadosInvalidosException("Pelo menos uma área temática é obrigatória.");
+        }
+        return Set.copyOf(areas);
     }
 }

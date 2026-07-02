@@ -7,6 +7,7 @@ public record DadosArtigo(
         String titulo,
         String resumo,
         List<String> coautores,
+        List<String> areas,
         int paginas,
         boolean recomendado
 ) {

@@ -110,10 +110,10 @@ revisor1@email.com;Inteligencia Artificial
 
 **artigos.csv**
 ```
-email_autor;titulo;resumo;coautores;paginas;recomendado
-autor1@email.com;Titulo do artigo;Resumo do artigo;coautor1@email.com;10;true
+email_autor;titulo;resumo;coautores;areas;paginas;recomendado
+autor1@email.com;Titulo do artigo;Resumo do artigo;coautor1@email.com;Inteligencia Artificial|Machine Learning;10;true
 ```
 
-Coautores múltiplos podem ser separados por `|` (ex.: `coautor1@email.com|coautor2@email.com`). O campo `recomendado` (`true`/`false`) orienta a simulação de pareceres na demonstração.
+Coautores e áreas múltiplos podem ser separados por `|` (ex.: `coautor1@email.com|coautor2@email.com`). Coautores devem estar cadastrados em `usuarios.csv`. O campo `recomendado` (`true`/`false`) orienta a simulação de pareceres na demonstração.
 
 Para alterar os dados de demonstração, edite os CSVs e execute novamente a aplicação.

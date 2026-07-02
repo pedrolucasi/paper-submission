@@ -24,7 +24,7 @@ public class RevisaoArtigo {
     }
 
     public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao, CadastroAreaTematica cadastroAreaTematica) {
-        this(sistemaAvaliacao, cadastroAreaTematica != null ? new ResolverAreasArtigo(cadastroAreaTematica) : null);
+        this(sistemaAvaliacao, new ResolverAreasArtigo());
     }
 
     public RevisaoArtigo(SistemaAvaliacao sistemaAvaliacao, GerenciadorEvento gerenciadorEvento) {
