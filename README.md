@@ -64,7 +64,7 @@ mvn package
 
 ### Executar a aplicação
 
-Via Maven:
+Via Maven (a partir da raiz do projeto):
 
 ```bash
 mvn exec:java -Dexec.mainClass="br.edu.ifpb.cstsi.pss.scireview.Main"
@@ -76,11 +76,47 @@ Ou, após o `mvn package`:
 java -cp target/paper-submission-1.0-SNAPSHOT.jar br.edu.ifpb.cstsi.pss.scireview.Main
 ```
 
-Saída esperada:
+Ao iniciar, a aplicação pergunta em qual **modo** você deseja executá-la:
 
 ```
-SciReview - Sistema de Submissão de Artigos
+Escolha o modo de execucao:
+  1) Modo exemplo    (demonstracao automatica de todos os RFs)
+  2) Modo interativo (uso manual via terminal)
 ```
+
+### Modo exemplo (1)
+
+Executa, sem interação, uma demonstração completa de ponta a ponta a partir dos dados dos CSVs: inicia o evento, define a categoria, cadastra áreas, monta o comitê, submete os artigos, distribui aos revisores, coleta os pareceres, decide o resultado, notifica os autores e exibe o histórico de ações (RF10) com um *undo*. É a forma mais rápida de ver todos os requisitos funcionando.
+
+### Modo interativo (2)
+
+Abre um menu de terminal em que o próprio usuário exercita cada requisito manualmente — cadastrar-se, cadastrar áreas, submeter artigos, distribuir, revisar, decidir e notificar. Os dados iniciais continuam vindo dos CSVs, e **os novos dados criados durante a sessão são persistidos de volta** nos arquivos em `src/main/resources/dados/` (ver seção seguinte).
+
+| Opção | Requisito | Ação |
+|-------|-----------|------|
+| 1  | RF02 | Cadastrar usuário |
+| 2  | RF03 | Cadastrar área temática *(coordenador)* |
+| 3  | RF03 | Revisor declara área de interesse |
+| 4  | RF04 | Definir categoria do evento *(coordenador)* |
+| 5  | RF04 | Registrar revisor no comitê *(coordenador)* |
+| 6  | RF05 | Submeter artigo *(autor)* |
+| 7  | RF05 | Listar meus artigos e status *(autor)* |
+| 8  | RF06 | Distribuir artigos aos revisores *(coordenador)* |
+| 9  | RF07 | Revisor emite parecer |
+| 10 | RF08 | Dashboard |
+| 11 | RF09 | Decisão final + notificação aos autores *(coordenador)* |
+| 12 | RF10 | Histórico de ações / desfazer |
+| 13 | RF01 | Iniciar novo evento *(coordenador)* |
+| 0  | —    | Sair |
+
+Notas de uso:
+
+- Cada artigo recebe **2 revisores** na distribuição; um artigo só passa ao estado `revisado` (elegível para a decisão final do RF09) depois que **ambos** os revisores emitem parecer.
+- Para demonstrar todo o fluxo do zero, use a opção **13** (novo evento) e depois `4 → 2 → 3 → 5 → 6 → 8 → 9 → 11`.
+- Ao emitir um parecer (opção 9), informe o **ID do artigo** exibido na lista de pendências (visão cega, sem autores).
+- No modo interativo, o RF09 usa envio de e-mail **simulado** (o conteúdo é impresso no terminal), evitando a necessidade de credenciais SMTP.
+
+Usuários de exemplo já disponíveis (senha `senha123`): `coordenador@evento.com`, `autor1@email.com`, `autor2@email.com`, `revisor1@email.com`, `revisor2@email.com`, `revisor3@email.com`.
 
 ## Carga de dados via CSV (E1)
 
@@ -138,3 +174,11 @@ autor1@email.com;Titulo do artigo;Resumo do artigo;coautor1@email.com;Inteligenc
 Coautores e áreas múltiplos podem ser separados por `|` (ex.: `coautor1@email.com|coautor2@email.com`). Coautores devem estar cadastrados em `usuarios.csv`. O campo `recomendado` (`true`/`false`) orienta a simulação de pareceres na demonstração.
 
 Para alterar os dados de demonstração, edite os CSVs e execute novamente a aplicação.
+
+### Persistência de novos dados
+
+No **modo interativo**, os dados criados durante a sessão (novos usuários, áreas, associações e artigos) são gravados de volta nesses mesmos arquivos CSV — de modo que reaparecem na próxima execução. Para restaurar os arquivos ao estado inicial versionado:
+
+```bash
+git checkout src/main/resources/dados
+```
