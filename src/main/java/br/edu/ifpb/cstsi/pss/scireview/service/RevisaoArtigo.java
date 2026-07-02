@@ -59,7 +59,12 @@ public class RevisaoArtigo {
 
         Avaliacao parecer = new Avaliacao(contribuicoes, pontosCritica, veredito);
         revisao.setAvaliacao(parecer);
-        artigo.concluirRevisao();
+
+        boolean todasConcluidas = sistemaAvaliacao.getRevisoesPorArtigo(artigo).stream()
+                .allMatch(Revisao::isConcluida);
+        if (todasConcluidas) {
+            artigo.concluirRevisao();
+        }
         return revisao;
     }
 

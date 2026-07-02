@@ -37,6 +37,9 @@ public class DistribuicaoRevisores {
         for (Artigo artigo : artigos) {
             List<Usuario> revisoresParaArtigo = selecionarRevisores(artigo, revisoresDisponiveis);
             distribuicao.put(artigo, revisoresParaArtigo);
+            for (Usuario revisor : revisoresParaArtigo) {
+                sistemaAvaliacao.adicionarRevisao(new Revisao(artigo, revisor));
+            }
         }
 
         return distribuicao;

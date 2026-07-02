@@ -7,6 +7,7 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Artigo;
 import br.edu.ifpb.cstsi.pss.scireview.model.Evento;
 import br.edu.ifpb.cstsi.pss.scireview.model.Papel;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -31,10 +32,12 @@ public class SubmissaoArtigo {
         gerenciadorEvento.aoLimparEstado(artigosPorId::clear);
     }
 
-    public Artigo submeter(Usuario autor, String nomeArtigo, String resumo, List<String> coautores) {
+    public Artigo submeter(Usuario autor, String nomeArtigo, String resumo,
+                           List<String> coautores, int quantidadePaginas) {
         validarAutor(autor);
         Evento eventoAtivo = obterEventoAtivo();
         validarPrazo(eventoAtivo);
+        validarRegrasDaCategoria(eventoAtivo, resumo, quantidadePaginas);
 
         String id = gerarIdUnico();
         Artigo artigo = new Artigo(id, nomeArtigo, resumo, coautores, autor, eventoAtivo);
@@ -67,6 +70,12 @@ public class SubmissaoArtigo {
         if (!evento.estaDentroDoPrazo(hoje)) {
             throw new PrazoSubmissaoEncerradoException();
         }
+    }
+
+    private void validarRegrasDaCategoria(Evento evento, String resumo, int quantidadePaginas) {
+        CategoriaArtigo categoria = evento.getCategoria().orElseThrow(() ->
+                new DadosInvalidosException("A categoria do evento ainda não foi definida."));
+        categoria.validarSubmissao(resumo, quantidadePaginas);
     }
 
     private String gerarIdUnico() {
