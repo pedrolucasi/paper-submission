@@ -1,0 +1,329 @@
+@startuml classes-visao-geral
+' SciReview - Diagrama de Classes (visão geral por camadas)
+' Gerar PNG: plantuml docs/diagramas/classes-visao-geral.puml
+
+title Diagrama de Classes — SciReview (visão geral)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+' ─── Domínio ───────────────────────────────────────────────
+
+package "model" #E8F5E9 {
+
+  class Artigo {
+    - id : String
+    - nome : String
+    - resumo : String
+    - estado : EstadoArtigo
+    + enviarParaRevisao()
+    + concluirRevisao()
+    + aceitar()
+    + rejeitar()
+  }
+
+  class Usuario {
+    - email : String
+    - papeis : Set<Papel>
+    + possuiPapel()
+    + adicionarAreaDeInteresse()
+  }
+
+  class Evento {
+    - nome : String
+    - inicioSubmissao : LocalDate
+    - fimSubmissao : LocalDate
+    + definirCategoria()
+    + estaDentroDoPrazo()
+  }
+
+  class Revisao {
+    - artigo : Artigo
+    - revisor : Usuario
+    - avaliacao : Avaliacao
+    + isConcluida()
+  }
+
+  class Avaliacao {
+    - contribuicoes : String
+    - pontosCritica : String
+    - veredito : Veredito
+  }
+
+  class AreaTematica {
+    - nome : String
+  }
+
+  class ArtigoParaRevisao <<DTO>> {
+    + id : String
+    + titulo : String
+    + resumo : String
+    + areasTematicas : List
+  }
+
+  class HistoricoRevisao <<DTO>> {
+    + artigo : ArtigoParaRevisao
+    + veredito : Veredito
+  }
+
+  Artigo "1" *-- "1" EstadoArtigo : estado
+  Artigo --> Usuario : autor
+  Artigo --> Evento
+  Artigo --> "1..*" AreaTematica : areas tematicas
+  Revisao --> Artigo
+  Revisao --> Usuario : revisor
+  Revisao --> Avaliacao
+  Usuario --> "0..*" AreaTematica : interesse
+}
+
+package "model.estado\n<<State>>" #FFF3E0 {
+
+  interface EstadoArtigo {
+    + getStatus()
+    + enviarParaRevisao()
+    + concluirRevisao()
+    + aceitar()
+    + rejeitar()
+  }
+
+  abstract class EstadoArtigoBase
+
+  class Submetido
+  class EmRevisao
+  class Revisado
+  class Aceito
+  class Rejeitado
+
+  EstadoArtigo <|.. EstadoArtigoBase
+  EstadoArtigoBase <|-- Submetido
+  EstadoArtigoBase <|-- EmRevisao
+  EstadoArtigoBase <|-- Revisado
+  EstadoArtigoBase <|-- Aceito
+  EstadoArtigoBase <|-- Rejeitado
+}
+
+package "model.categoria\n<<Strategy>>" #E3F2FD {
+
+  interface CategoriaArtigo {
+    + getNome()
+    + validarSubmissao()
+  }
+
+  class FullPaper
+  class ShortPaper
+  class Demo
+
+  CategoriaArtigo <|.. FullPaper
+  CategoriaArtigo <|.. ShortPaper
+  CategoriaArtigo <|.. Demo
+}
+
+Evento --> "0..1" CategoriaArtigo : categoria
+
+' ─── Serviços ──────────────────────────────────────────────
+
+package "service" #F3E5F5 {
+
+  class GerenciadorEvento {
+    - eventoAtual : Evento
+  + startNovoEvento()
+  + finalizarCicloRevisoes()
+  + adicionarObserver()
+  + aoLimparEstado()
+  }
+
+  class SubmissaoArtigo {
+    + submeter()
+    + listarArtigosDoAutor()
+  }
+
+  class CadastroUsuario {
+    + cadastrar()
+    + buscarPorEmail()
+  }
+
+  class CadastroAreaTematica {
+    + cadastrar()
+    + associarRevisor()
+  }
+
+  class ComiteTecnico {
+    + registrarRevisor()
+  }
+
+  class SistemaAvaliacao {
+    + adicionarArtigo()
+    + adicionarRevisao()
+    + listarRevisoesPendentesDoRevisor()
+    + listarRevisoesConcluidasDoRevisor()
+  }
+
+  class DistribuicaoRevisores {
+    + distribuirArtigos()
+    + obterCargaPorRevisor()
+  }
+
+  class RevisaoArtigo {
+    + listarArtigosPendentes()
+    + listarHistoricoRevisoes()
+    + emitirParecer()
+  }
+
+  abstract class GeradorEmail {
+    + {final} gerarEmail()
+    # gerarCabecalho()
+    # gerarCorpo()
+  }
+
+  class EmailAceite
+  class EmailRejeicao
+
+  class ServicoEmail {
+    + notificarRevisorAtribuicao()
+    + notificarTodosAutores()
+  }
+
+  GeradorEmail <|-- EmailAceite
+  GeradorEmail <|-- EmailRejeicao
+
+  SubmissaoArtigo --> GerenciadorEvento
+  SubmissaoArtigo --> CadastroAreaTematica
+  SubmissaoArtigo --> CadastroUsuario
+  SubmissaoArtigo ..> Artigo : <<create>>
+
+  DistribuicaoRevisores --> SistemaAvaliacao
+  DistribuicaoRevisores --> ServicoEmail
+  RevisaoArtigo --> SistemaAvaliacao
+  ServicoEmail --> SistemaAvaliacao
+  ServicoEmail --> CadastroUsuario
+  ServicoEmail ..> GeradorEmail : usa
+}
+
+' ─── Observer ──────────────────────────────────────────────
+
+package "observer\n<<Observer>>" #FCE4EC {
+
+  interface Observer {
+    + atualizar(evento, dados)
+  }
+}
+
+GerenciadorEvento o-- "0..*" Observer
+ServicoEmail ..|> Observer
+
+' ─── Command ───────────────────────────────────────────────
+
+package "command\n<<Command>>" #ECEFF1 {
+
+  interface Command {
+    + executar()
+    + desfazer()
+    + getDescricao()
+  }
+
+  class CommandHistory <<Singleton>> {
+    - {static} instance
+    + {static} getInstance()
+    + adicionar()
+    + desfazerUltimo()
+    + exibirHistorico()
+  }
+
+  class IniciarEventoCommand
+  class SubmeterArtigoCommand
+  class DistribuirArtigosCommand
+  class FinalizarCicloCommand
+  class "..." as OutrosCommands <<Command>>
+
+  Command <|.. IniciarEventoCommand
+  Command <|.. SubmeterArtigoCommand
+  Command <|.. DistribuirArtigosCommand
+  Command <|.. FinalizarCicloCommand
+  Command <|.. OutrosCommands
+
+  CommandHistory o-- "0..*" Command
+
+  IniciarEventoCommand --> GerenciadorEvento
+  SubmeterArtigoCommand --> SubmissaoArtigo
+  DistribuirArtigosCommand --> DistribuicaoRevisores
+  FinalizarCicloCommand --> GerenciadorEvento
+}
+
+' ─── E1 + Apresentação + RF08 ──────────────────────────────
+
+package "loader (E1)" #E0F7FA {
+
+  class CsvDataLoader {
+    + carregar() : DadosCarregados
+  }
+
+  class DadosCarregados <<DTO>> {
+    + usuarios
+    + evento
+    + areas
+    + artigos
+  }
+
+  CsvDataLoader ..> DadosCarregados
+}
+
+package "dashboard (RF08)" #F1F8E9 {
+
+  class Dashboard {
+    + consultarDados() : DadosDashboard
+  }
+
+  class DadosDashboard <<DTO>>
+}
+
+package "presentation (RNF)" #FAFAFA {
+
+  class SaidaConsole {
+    + linha()
+    + simularEmail()
+  }
+
+  class SaidaAplicacao <<Singleton>> {
+    + {static} get()
+  }
+
+  class DashboardApresentador
+  class DistribuicaoApresentador
+
+  DashboardApresentador --> SaidaConsole
+  SaidaAplicacao --> SaidaConsole
+}
+
+Dashboard --> SistemaAvaliacao
+Dashboard --> CadastroUsuario
+DashboardApresentador ..> Dashboard : exibe
+
+RevisaoArtigo ..> ArtigoParaRevisao : visão cega
+RevisaoArtigo ..> HistoricoRevisao
+
+' ─── Entrada ───────────────────────────────────────────────
+
+class Main <<application>> {
+  + main()
+}
+
+Main ..> CsvDataLoader : carrega CSV
+Main ..> Command : executa
+Main ..> DashboardApresentador
+Main ..> GerenciadorEvento
+
+' ─── Legenda padrões ───────────────────────────────────────
+
+legend bottom left
+  **Padrões de projeto**
+  | State | model.estado — status do Artigo |
+  | Strategy | model.categoria — regras por tipo de evento |
+  | Observer | GerenciadorEvento notifica ServicoEmail |
+  | Template Method | GeradorEmail — corpo do e-mail |
+  | Command | command.* — ações do coordenador (RF10) |
+  | Singleton | CommandHistory, SaidaAplicacao |
+endlegend
+
+@enduml

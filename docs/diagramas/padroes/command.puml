@@ -1,0 +1,73 @@
+@startuml padrao-command
+' Padrão Command — RF10
+' Encapsula ações do coordenador com undo e auditoria
+
+title Padrão Command — ações auditáveis (RF10)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+interface Command {
+  + executar()
+  + desfazer()
+  + getDescricao()
+  + getDataExecucao()
+  + getExecutor()
+  + isReversivel()
+}
+
+class IniciarEventoCommand
+class DefinirCategoriaCommand
+class CadastrarAreaCommand
+class RegistrarRevisorCommand
+class SubmeterArtigoCommand
+class DistribuirArtigosCommand
+class FinalizarCicloCommand
+
+class GerenciadorEvento
+class SubmissaoArtigo
+class CadastroAreaTematica
+class ComiteTecnico
+class DistribuicaoRevisores
+
+class CommandHistory <<Invoker>> {
+  + {static} getInstance() : CommandHistory
+  + adicionar(command)
+  + desfazerUltimo()
+  + refazerUltimoDesfeito()
+}
+
+class Main {
+  + main()
+}
+
+Command <|.. IniciarEventoCommand
+Command <|.. DefinirCategoriaCommand
+Command <|.. CadastrarAreaCommand
+Command <|.. RegistrarRevisorCommand
+Command <|.. SubmeterArtigoCommand
+Command <|.. DistribuirArtigosCommand
+Command <|.. FinalizarCicloCommand
+
+IniciarEventoCommand --> GerenciadorEvento
+DefinirCategoriaCommand --> GerenciadorEvento
+CadastrarAreaCommand --> CadastroAreaTematica
+RegistrarRevisorCommand --> ComiteTecnico
+SubmeterArtigoCommand --> SubmissaoArtigo
+DistribuirArtigosCommand --> DistribuicaoRevisores
+FinalizarCicloCommand --> GerenciadorEvento
+
+Main ..> Command : executar()
+
+CommandHistory o-- "0..*" Command : histórico
+Command ..> CommandHistory : adicionar(this)
+Main ..> CommandHistory : desfazerUltimo()
+
+note bottom of Command
+  Cada comando encapsula parâmetros + receptor.
+  **executar()** chama o serviço e registra
+  no histórico (ver diagrama Singleton).
+  **desfazer()** reverte quando reversível.
+end note
+
+@enduml

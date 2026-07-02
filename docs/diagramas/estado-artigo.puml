@@ -1,0 +1,81 @@
+@startuml estado-artigo
+' SciReview - Diagrama de estados do Artigo (RF05 + State Pattern)
+' Gerar PNG: plantuml docs/diagramas/estado-artigo.puml
+' Ou online: https://www.plantuml.com/plantuml
+
+title Diagrama de Estados — Artigo (SciReview)
+
+skinparam state {
+  BackgroundColor #F8F9FA
+  BorderColor #333333
+  FontName Arial
+  FontSize 12
+}
+
+skinparam note {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+}
+
+' Estados finais
+state Aceito <<final>>
+state Rejeitado <<final>>
+
+[*] --> Submetido : submeter()\n[autor submete artigo]
+
+state Submetido {
+}
+
+state EmRevisao {
+}
+
+state Revisado {
+}
+
+Submetido --> EmRevisao : enviarParaRevisao()\n[coordenador distribui\naos revisores]
+
+EmRevisao --> Revisado : concluirRevisao()\n[2 revisores emitiram\nparecer]
+
+Revisado --> Aceito : aceitar()\n[decisão do coordenador]
+Revisado --> Rejeitado : rejeitar()\n[decisão do coordenador]
+
+Aceito --> [*]
+Rejeitado --> [*]
+
+note right of Submetido
+  **Estado inicial** após submissão.
+  Autor não recebe informações
+  adicionais neste estado.
+end note
+
+note right of EmRevisao
+  Artigo atribuído aos revisores.
+  Revisão em andamento (blind review).
+end note
+
+note right of Revisado
+  Todos os pareceres concluídos.
+  Aguarda decisão final do coordenador.
+end note
+
+note bottom of Aceito
+  **Estado final.** Autor recebe
+  pareceres e notificação por e-mail.
+end note
+
+note bottom of Rejeitado
+  **Estado final.** Autor recebe
+  pareceres e notificação por e-mail.
+end note
+
+legend right
+  |= Correspondência no código |
+  | Submetido → classe Submetido |
+  | EmRevisao → classe EmRevisao |
+  | Revisado → classe Revisado |
+  | Aceito → classe Aceito |
+  | Rejeitado → classe Rejeitado |
+  | Contexto → Artigo (delega para EstadoArtigo) |
+endlegend
+
+@enduml

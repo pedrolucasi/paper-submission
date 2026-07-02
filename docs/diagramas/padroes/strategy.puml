@@ -1,0 +1,68 @@
+@startuml padrao-strategy
+' Padrão Strategy — RF04
+' Estratégia: regras de submissão por categoria de evento
+
+title Padrão Strategy — categorias de artigo (RF04)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+interface CategoriaArtigo <<Strategy>> {
+  + getNome() : String
+  + getLimiteMaximoPaginas() : int
+  + validarSubmissao(resumo, paginas)
+}
+
+class FullPaper {
+  - LIMITE_PAGINAS = 12
+  - MIN_RESUMO = 100
+}
+
+class ShortPaper {
+  - LIMITE_PAGINAS = 6
+  - MIN_RESUMO = 50
+}
+
+class Demo {
+  - LIMITE_PAGINAS = 4
+  - MIN_RESUMO = 30
+}
+
+class Evento <<Context>> {
+  - categoria : CategoriaArtigo
+  + definirCategoria(categoria)
+  + getCategoria()
+}
+
+class SubmissaoArtigo {
+  + submeter(...)
+}
+
+class DefinirCategoriaCommand {
+  - categoria : CategoriaArtigo
+  + executar()
+}
+
+class GerenciadorEvento {
+  + definirCategoria(coord, categoria)
+}
+
+CategoriaArtigo <|.. FullPaper
+CategoriaArtigo <|.. ShortPaper
+CategoriaArtigo <|.. Demo
+
+Evento --> "0..1" CategoriaArtigo : usa estratégia
+SubmissaoArtigo ..> Evento : obtém categoria
+SubmissaoArtigo ..> CategoriaArtigo : validarSubmissao()
+
+DefinirCategoriaCommand --> GerenciadorEvento
+DefinirCategoriaCommand --> CategoriaArtigo : injeta
+GerenciadorEvento ..> Evento : define categoria
+
+note bottom of SubmissaoArtigo
+  Na submissão, o serviço delega a validação
+  à estratégia escolhida pelo coordenador —
+  sem if/else por tipo de artigo.
+end note
+
+@enduml

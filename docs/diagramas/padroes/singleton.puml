@@ -1,0 +1,61 @@
+@startuml padrao-singleton
+' Padrão Singleton — RF10 + RNF
+' Instância única compartilhada em todo o sistema
+
+title Padrão Singleton — histórico e saída global
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+class CommandHistory <<Singleton>> {
+  - {static} instance : CommandHistory
+  - historico : List<Command>
+  - desfeitos : List<Command>
+  - CommandHistory()
+  + {static} getInstance() : CommandHistory
+  + adicionar(command)
+  + desfazerUltimo()
+  + refazerUltimoDesfeito()
+  + exibirHistorico()
+  + limparHistorico()
+}
+
+class SaidaAplicacao <<Singleton>> {
+  - {static} saida : SaidaConsole
+  - SaidaAplicacao()
+  + {static} get() : SaidaConsole
+  + {static} configurar(console)
+}
+
+class SaidaConsole {
+  + linha(...)
+  + simularEmail(...)
+}
+
+interface Command
+
+class IniciarEventoCommand
+class DefinirCategoriaCommand
+class "..." as OutrosCommands
+
+CommandHistory "1" o-- "0..*" Command
+SaidaAplicacao --> SaidaConsole
+
+IniciarEventoCommand ..> CommandHistory : getInstance().adicionar()
+DefinirCategoriaCommand ..> SaidaAplicacao : get().linha()
+OutrosCommands ..> CommandHistory
+OutrosCommands ..> SaidaAplicacao
+
+note right of CommandHistory
+  **RF10** — ponto único de auditoria:
+  undo/redo e histórico de ações
+  do coordenador em toda a aplicação.
+end note
+
+note right of SaidaAplicacao
+  **RNF** — saída centralizada:
+  serviços e commands usam a mesma
+  instância de SaidaConsole.
+end note
+
+@enduml
