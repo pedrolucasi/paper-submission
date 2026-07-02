@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.AreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroAreaTematica;
 
 import java.time.LocalDateTime;
@@ -23,14 +24,14 @@ public class CadastrarAreaCommand implements Command {
     @Override
     public void executar() {
         areaCriada = cadastroArea.cadastrar(coordenador, nomeArea);
-        System.out.println("[OK] Area cadastrada: " + nomeArea);
+        SaidaAplicacao.get().linha("[OK] Area cadastrada: " + nomeArea);
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
         if (areaCriada != null) {
-            System.out.println("[DESFAZER] Cadastro da area: " + nomeArea);
+            SaidaAplicacao.get().linha("[DESFAZER] Cadastro da area: " + nomeArea);
         }
     }
 

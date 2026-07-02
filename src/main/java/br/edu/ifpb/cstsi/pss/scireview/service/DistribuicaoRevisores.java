@@ -144,34 +144,4 @@ public class DistribuicaoRevisores {
         }
         return afinidade;
     }
-
-    public void exibirDistribuicao(Map<Artigo, List<Usuario>> distribuicao) {
-        System.out.println("\n+--------------------------------------------------------+");
-        System.out.println("|           DISTRIBUICAO DE ARTIGOS POR REVISOR           |");
-        System.out.println("+--------------------------------------------------------+");
-
-        for (Map.Entry<Artigo, List<Usuario>> entry : distribuicao.entrySet()) {
-            Artigo artigo = entry.getKey();
-            List<Usuario> revisoresAtribuidos = entry.getValue();
-            Set<AreaTematica> areasDoArtigo = resolverAreasArtigo.resolver(artigo);
-
-            System.out.println("\nArtigo: " + artigo.getTitulo() + " (ID: " + artigo.getId() + ")");
-            System.out.println("   Autor: " + artigo.getAutor().getEmail());
-            System.out.println("   Coautores: " + artigo.getCoautores());
-
-            if (revisoresAtribuidos.isEmpty()) {
-                System.out.println("   Nenhum revisor disponivel para este artigo.");
-            } else {
-                System.out.println("   Revisores atribuidos:");
-                for (Usuario revisor : revisoresAtribuidos) {
-                    int afinidade = calcularAfinidade(revisor, areasDoArtigo);
-                    int carga = (int) sistemaAvaliacao.getTodasRevisoes().stream()
-                            .filter(r -> r.getRevisor().equals(revisor))
-                            .count();
-                    System.out.println("      - " + revisor.getEmail()
-                            + " (afinidade: " + afinidade + ", carga total: " + carga + ")");
-                }
-            }
-        }
-    }
 }

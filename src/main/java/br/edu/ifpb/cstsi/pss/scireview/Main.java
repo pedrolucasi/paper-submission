@@ -22,6 +22,9 @@ import br.edu.ifpb.cstsi.pss.scireview.model.Revisao;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.Veredito;
 import br.edu.ifpb.cstsi.pss.scireview.model.categoria.FullPaper;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.DashboardApresentador;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaConsole;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroAreaTematica;
 import br.edu.ifpb.cstsi.pss.scireview.service.CadastroUsuario;
 import br.edu.ifpb.cstsi.pss.scireview.service.ComiteTecnico;
@@ -41,8 +44,12 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("SciReview - Sistema de Submissao de Artigos");
-        System.out.println("============================================\n");
+        SaidaConsole saida = new SaidaConsole();
+        SaidaAplicacao.configurar(saida);
+
+        saida.linha("SciReview - Sistema de Submissao de Artigos");
+        saida.linha("============================================");
+        saida.linha();
 
         CommandHistory historico = CommandHistory.getInstance();
 
@@ -54,10 +61,11 @@ public class Main {
                 gerenciadorEvento, cadastroAreaTematica, cadastroUsuario);
         ComiteTecnico comiteTecnico = new ComiteTecnico();
 
-        ServicoEmail servicoEmail = new ServicoEmail(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao);
+        ServicoEmail servicoEmail = new ServicoEmail(gerenciadorEvento, cadastroUsuario, sistemaAvaliacao, saida);
         gerenciadorEvento.adicionarObserver(servicoEmail);
 
         Dashboard dashboard = new Dashboard(sistemaAvaliacao, cadastroUsuario);
+        DashboardApresentador dashboardApresentador = new DashboardApresentador(saida);
         DistribuicaoRevisores distribuicao = new DistribuicaoRevisores(
                 sistemaAvaliacao, cadastroAreaTematica, servicoEmail);
         RevisaoArtigo revisaoArtigo = new RevisaoArtigo(
@@ -72,7 +80,8 @@ public class Main {
         // E1 - Carga de dados via CSV
         CsvDataLoader csvDataLoader = new CsvDataLoader();
         DadosCarregados dados = csvDataLoader.carregar();
-        System.out.println("[CSV] Dados carregados de src/main/resources/dados/\n");
+        saida.linha("[CSV] Dados carregados de src/main/resources/dados/");
+        saida.linha();
 
         Usuario coordenador = null;
         List<Usuario> revisores = new ArrayList<>();
@@ -166,15 +175,17 @@ public class Main {
                 distribuicao, artigos, revisores, coordenador);
         distribuir.executar();
 
-        System.out.println("\n[RF06] Carga por revisor apos distribuicao:");
+        saida.linha();
+        saida.linha("[RF06] Carga por revisor apos distribuicao:");
         distribuicao.obterCargaPorRevisor(revisores).forEach((revisor, carga) ->
-                System.out.println("   - " + revisor.getEmail() + ": " + carga + " artigo(s)"));
+                saida.linha("   - " + revisor.getEmail() + ": " + carga + " artigo(s)"));
 
         // RF06 - Blind review: revisor ve apenas titulo, resumo e areas (sem autores)
         if (!revisores.isEmpty()) {
-            System.out.println("\n[RF06] Artigos pendentes (visao cega) - " + revisores.get(0).getEmail());
+            saida.linha();
+            saida.linha("[RF06] Artigos pendentes (visao cega) - " + revisores.get(0).getEmail());
             revisaoArtigo.listarArtigosPendentes(revisores.get(0)).forEach(artigoCego ->
-                    System.out.println("   - " + artigoCego.titulo() + " | areas: " + artigoCego.areasTematicas()));
+                    saida.linha("   - " + artigoCego.titulo() + " | areas: " + artigoCego.areasTematicas()));
         }
 
         // RF07 - Conclusao de revisao: cada revisor emite seu parecer via o servico
@@ -191,12 +202,13 @@ public class Main {
 
         // RF07 - Historico de avaliacoes concluidas por revisor (visao cega)
         for (Usuario revisor : revisores) {
-            System.out.println("\n[RF07] Historico de revisoes - " + revisor.getEmail());
+            saida.linha();
+            saida.linha("[RF07] Historico de revisoes - " + revisor.getEmail());
             List<HistoricoRevisao> historicoRevisor = revisaoArtigo.listarHistoricoRevisoes(revisor);
             if (historicoRevisor.isEmpty()) {
-                System.out.println("   (nenhuma revisao concluida)");
+                saida.linha("   (nenhuma revisao concluida)");
             } else {
-                historicoRevisor.forEach(item -> System.out.println(
+                historicoRevisor.forEach(item -> saida.linha(
                         "   - " + item.artigo().titulo()
                                 + " | veredito: " + item.veredito()
                                 + " | contribuicoes: " + item.contribuicoes()));
@@ -214,10 +226,10 @@ public class Main {
             long concluidas = revisoesDoArtigo.stream().filter(Revisao::isConcluida).count();
             if (positivas * 2 >= concluidas) {
                 artigo.aceitar();
-                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi ACEITO.");
+                saida.linha("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi ACEITO.");
             } else {
                 artigo.rejeitar();
-                System.out.println("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi REJEITADO.");
+                saida.linha("[DECISAO] Artigo '" + artigo.getTitulo() + "' (ID: " + artigo.getId() + ") foi REJEITADO.");
             }
         }
 
@@ -229,26 +241,29 @@ public class Main {
         finalizar.executar();
 
         // RF10 - Exibir Historico de Auditoria
-        System.out.println("\n+--------------------------------------------------------+");
-        System.out.println("|  TASK 4.2 - PADRAO COMMAND (RF10)                     |");
-        System.out.println("|  Log e Auditoria Historica de Acoes do Coordenador    |");
-        System.out.println("+--------------------------------------------------------+");
+        saida.linha();
+        saida.linha("+--------------------------------------------------------+");
+        saida.linha("|  TASK 4.2 - PADRAO COMMAND (RF10)                     |");
+        saida.linha("|  Log e Auditoria Historica de Acoes do Coordenador    |");
+        saida.linha("+--------------------------------------------------------+");
 
         historico.exibirHistorico();
 
-        // Demonstrando Undo
-        System.out.println("\n[DEMONSTRACAO] Desfazendo ultimo comando...");
+        saida.linha();
+        saida.linha("[DEMONSTRACAO] Desfazendo ultimo comando...");
         historico.desfazerUltimo();
 
-        System.out.println("\n[DEMONSTRACAO] Historico apos Undo:");
+        saida.linha();
+        saida.linha("[DEMONSTRACAO] Historico apos Undo:");
         historico.exibirHistorico();
 
-        System.out.println("\n[DASHBOARD] Exibindo dados finais:");
-        dashboard.exibirDashboard();
+        saida.linha();
+        saida.linha("[DASHBOARD] Exibindo dados finais:");
+        dashboardApresentador.exibir(dashboard.consultarDados());
 
-        // RF01 - Demonstracao: novo evento descarta dados do evento anterior
-        System.out.println("\n[RF01] Iniciando novo evento (limpeza automatica do anterior)...");
-        System.out.println("   Antes  -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
+        saida.linha();
+        saida.linha("[RF01] Iniciando novo evento (limpeza automatica do anterior)...");
+        saida.linha("   Antes  -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
                 + " | areas: " + cadastroAreaTematica.listar().size()
                 + " | comite: " + comiteTecnico.quantidadeRevisores()
                 + " | comandos: " + historico.getHistorico().size());
@@ -263,11 +278,12 @@ public class Main {
         );
         novoEvento.executar();
 
-        System.out.println("   Depois -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
+        saida.linha("   Depois -> artigos: " + sistemaAvaliacao.listarTodosArtigos().size()
                 + " | areas: " + cadastroAreaTematica.listar().size()
                 + " | comite: " + comiteTecnico.quantidadeRevisores()
                 + " | comandos: " + historico.getHistorico().size() + " (apenas o novo evento)");
 
-        System.out.println("\n[FIM] Programa finalizado.");
+        saida.linha();
+        saida.linha("[FIM] Programa finalizado.");
     }
 }

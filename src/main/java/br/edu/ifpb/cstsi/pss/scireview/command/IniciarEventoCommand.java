@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.Evento;
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.GerenciadorEvento;
 
 import java.time.LocalDate;
@@ -34,14 +35,14 @@ public class IniciarEventoCommand implements Command {
     @Override
     public void executar() {
         eventoCriado = gerenciadorEvento.startNovoEvento(nome, cidade, periodo, inicioSubmissao, fimSubmissao);
-        System.out.println("[OK] Evento iniciado: " + nome);
+        SaidaAplicacao.get().linha("[OK] Evento iniciado: " + nome);
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
         if (eventoCriado != null) {
-            System.out.println("[DESFAZER] Criacao do evento: " + nome);
+            SaidaAplicacao.get().linha("[DESFAZER] Criacao do evento: " + nome);
             gerenciadorEvento.limparEstadoAnterior();
         }
     }

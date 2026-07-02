@@ -1,6 +1,7 @@
 package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.ComiteTecnico;
 
 import java.time.LocalDateTime;
@@ -21,13 +22,13 @@ public class RegistrarRevisorCommand implements Command {
     @Override
     public void executar() {
         comiteTecnico.registrarRevisor(coordenador, revisor);
-        System.out.println("[OK] Revisor registrado: " + revisor.getEmail());
+        SaidaAplicacao.get().linha("[OK] Revisor registrado: " + revisor.getEmail());
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
-        System.out.println("[DESFAZER] Registro do revisor: " + revisor.getEmail());
+        SaidaAplicacao.get().linha("[DESFAZER] Registro do revisor: " + revisor.getEmail());
     }
 
     @Override

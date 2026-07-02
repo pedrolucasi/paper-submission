@@ -14,10 +14,4 @@ public class Notificacao {
     public String getDestinatario() { return destinatario; }
     public String getTitulo() { return titulo; }
     public String getConteudo() { return conteudo; }
-
-    public void enviar() {
-        System.out.println("Notificação enviada para: " + destinatario);
-        System.out.println("Título: " + titulo);
-        System.out.println("Conteúdo:\n" + conteudo);
-    }
 }

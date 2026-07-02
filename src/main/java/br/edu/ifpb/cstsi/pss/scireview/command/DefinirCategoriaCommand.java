@@ -2,6 +2,7 @@ package br.edu.ifpb.cstsi.pss.scireview.command;
 
 import br.edu.ifpb.cstsi.pss.scireview.model.Usuario;
 import br.edu.ifpb.cstsi.pss.scireview.model.categoria.CategoriaArtigo;
+import br.edu.ifpb.cstsi.pss.scireview.presentation.SaidaAplicacao;
 import br.edu.ifpb.cstsi.pss.scireview.service.GerenciadorEvento;
 
 import java.time.LocalDateTime;
@@ -22,13 +23,13 @@ public class DefinirCategoriaCommand implements Command {
     @Override
     public void executar() {
         gerenciadorEvento.definirCategoria(coordenador, categoria);
-        System.out.println("[OK] Categoria definida: " + categoria.getNome());
+        SaidaAplicacao.get().linha("[OK] Categoria definida: " + categoria.getNome());
         CommandHistory.getInstance().adicionar(this);
     }
 
     @Override
     public void desfazer() {
-        System.out.println("[DESFAZER] Definicao da categoria: " + categoria.getNome());
+        SaidaAplicacao.get().linha("[DESFAZER] Definicao da categoria: " + categoria.getNome());
     }
 
     @Override
